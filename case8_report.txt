@@ -1,0 +1,40 @@
+CASE 8 VERIFICA: /api/net/scan non usato per avviare scansione dal frontend
+
+A. Stato attuale endpoint:
+   - /api/net/scan: usato solo per polling stato (non per iniziare scansioni)
+   - /api/wifi/scan: usato per avviare scansione
+
+B. Flusso START → SCANNING → COMPLETED:
+   - Avvio: scanWifi() o netScan() chiamano /api/wifi/scan
+   - Dopo avvio: S.mode2='scattering' impostato, setTimeout(netPoll,1500) avvia polling
+   - Polling: netPoll() chiama /api/net/scan per verificare stato
+   - Completato: quando mode!=scanning, modalità resettata e risultati mostrati
+
+C. Comportamento con 0 reti trovate:
+   - /api/net/scan restituisce mode e running field
+   - Il fronte distingue "mai eseguita" da "0 reti" tramite r.running e r.mode
+   - netCount() controllo attuale potrebbe non distinguere i due casi (questione separata)
+
+D. Comportamento errore/timeout:
+   - /api/net/scan error handler imposta S.mode2='' e mostra errore
+   - Successiva richiesta ha comportamento deterministico tramite polling ciclico
+
+E. Richieste GET ripetute dopo completamento:
+   - /api/net/scan continua a leggere stato corrente (non riavvia scansione)
+   - Se modalità già completata, restituisce gli stessi risultati senza reset
+
+F. Nuova scansione esplicitamente richiesta:
+   - Solo scanWifi() o netScan() (che chiamano /api/wifi/scan) avvia nuova scansione
+   - Questo resetta i risultati precedenti
+
+G. Analisi frontend:
+   - /api/net/scan chiamato da:
+     * netPoll() riga 767: polling stato ✓
+     * loadNet() riga 779: polling stato ✓
+   - /api/net/scan MAI usato per chiamate che iniziano una scansione
+   - /api/wifi/scan usato da scanWifi() riga 594 e netScan() riga 759 per avviare scansione
+
+H. Problemi residui:
+   - Nessuno rilevato per case 8
+
+I. Verifica completata: TUTTO CORRETTO

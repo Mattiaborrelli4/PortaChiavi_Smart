@@ -1,0 +1,759 @@
+# 🔑 PORTACHIAVE — ROADMAP FUTURA
+
+## 1. STATO ATTUALE DEL PROGETTO
+
+Il progetto attuale è basato su:
+
+* ESP8266 NodeMCU V3
+* OLED SSD1306 128×64
+* RobotEyes / repository RobotEyes-ESP8266
+* PlatformIO
+* Wi-Fi Access Point
+* porta seriale COM6
+* firmware principale in `src/main.cpp`
+* gestione occhi in `src/RobotEyes.cpp`
+* header in `include/RobotEyes.h`
+
+Il comportamento attuale FUNZIONANTE NON deve essere modificato inutilmente.
+
+### Modalità senza telefono collegato
+
+Il robot rimane permanentemente addormentato:
+
+* occhi socchiusi visibili
+* palpebre/strisce degli occhi
+* lettera Z in alto a sinistra
+* movimento leggero della Z
+* respirazione degli occhi
+* leggero movimento verticale durante il respiro
+
+### Modalità telefono collegato
+
+Quando un dispositivo si collega al Wi-Fi:
+
+* il robot si sveglia
+* occhi normali
+* blink automatico
+* movimento dello sguardo
+* nessun cambio automatico di emozione
+
+IMPORTANTE:
+Non reintrodurre il vecchio sistema che cambiava automaticamente emozione ogni 6 secondi.
+
+---
+
+# 2. ISPIRAZIONE PRINCIPALE
+
+Repository analizzata:
+
+https://github.com/Sor3nt/Flipper-Zero-ESP32-Port
+
+La repository viene utilizzata come FONTE DI ISPIRAZIONE per architettura e funzionalità.
+
+NON bisogna copiare tutto il progetto dentro PortaChiave.
+
+L'obiettivo è prendere le idee utili e implementarle progressivamente in un firmware progettato appositamente per il PortaChiave.
+
+La repository utilizza una struttura modulare con concetti come:
+
+* applicazioni
+* servizi
+* GUI
+* input
+* notifiche
+* Bluetooth
+* Wi-Fi
+* power management
+* storage
+* filesystem
+* aggiornamento firmware
+* periferiche
+
+Questa organizzazione è interessante per la futura versione ESP32 del PortaChiave.
+
+---
+
+# 3. FUTURO PASSAGGIO A ESP32
+
+In futuro il progetto dovrebbe passare da:
+
+ESP8266
+
+a:
+
+ESP32, preferibilmente una variante sufficientemente potente per gestire BLE, Wi-Fi, display e servizi contemporaneamente.
+
+La scelta definitiva della scheda ESP32 dovrà essere fatta prima della progettazione della versione finale.
+
+Se necessario valutare ESP32-S3 e altre varianti con RAM/PSRAM adeguata.
+
+---
+
+# 4. FUNZIONI FUTURE PRIORITARIE
+
+## 🔵 BLE — PRIORITÀ ALTA
+
+Il Bluetooth Low Energy dovrebbe diventare il principale collegamento con il telefono.
+
+Possibili funzioni:
+
+* connessione telefono
+* riconoscimento del telefono personale
+* stato connesso/disconnesso
+* ricerca telefono
+* ricerca portachiavi
+* BLE scanner
+* gestione dispositivi associati
+* bonding
+* eventuale BLE HID
+
+Possibile comportamento degli occhi:
+
+BLE connesso:
+👀
+
+BLE disconnesso:
+😰
+
+Ricerca telefono:
+🤔
+
+Telefono ritrovato:
+😄
+
+---
+
+# 5. TROVA TELEFONO / TROVA PORTACHIAVI
+
+Funzione importante da sviluppare.
+
+### Portachiavi → telefono
+
+Premendo un pulsante:
+
+* inviare comando al telefono
+* generare una notifica
+* eventualmente far suonare il telefono
+
+### Telefono → portachiavi
+
+Dall'app o interfaccia:
+
+* comando al portachiavi
+* animazione degli occhi
+* eventuale buzzer
+* eventuale vibrazione
+
+Questa funzione dovrebbe essere progettata usando BLE.
+
+---
+
+# 6. POWER MANAGEMENT
+
+Funzione molto importante per un dispositivo alimentato a batteria.
+
+Possibili stati:
+
+SLEEP:
+😴 + Z + respirazione
+
+WAKE:
+👀
+
+LOW BATTERY:
+😫 / occhi specifici
+
+Il dispositivo dovrebbe poter utilizzare:
+
+* Light Sleep
+* Deep Sleep
+* wake tramite pulsante
+* wake tramite eventi BLE quando tecnicamente possibile
+* wake tramite sensore di movimento
+* gestione automatica del consumo
+
+Obiettivo:
+
+massimizzare la durata della batteria.
+
+---
+
+# 7. BATTERIA
+
+Aggiungere in futuro:
+
+* lettura tensione batteria
+* percentuale stimata
+* livello batteria sul display
+* avviso batteria bassa
+* comportamento speciale sotto una certa soglia
+* eventuale modalità risparmio energetico automatica
+
+Esempio:
+
+Batteria > 50%:
+normale
+
+Batteria 20–50%:
+indicatore discreto
+
+Batteria < 20%:
+notifica + occhi specifici
+
+Batteria critica:
+deep sleep / modalità risparmio
+
+---
+
+# 8. SISTEMA DI NOTIFICHE
+
+Creare un sistema centralizzato di notifiche.
+
+Esempio concettuale:
+
+`notify(EVENT_PHONE_CONNECTED)`
+
+`notify(EVENT_PHONE_LOST)`
+
+`notify(EVENT_LOW_BATTERY)`
+
+`notify(EVENT_MOTION)`
+
+`notify(EVENT_UPDATE)`
+
+Le notifiche potranno utilizzare:
+
+* OLED
+* occhi
+* LED
+* buzzer
+* vibrazione
+
+In questo modo non bisogna mettere logica diversa in ogni parte del firmware.
+
+---
+
+# 9. WEB INTERFACE
+
+Creare eventualmente una pagina web raggiungibile dal telefono.
+
+Esempio:
+
+`192.168.4.1`
+
+Possibili impostazioni:
+
+* nome dispositivo
+* Wi-Fi
+* password
+* luminosità
+* modalità occhi
+* animazioni
+* sleep
+* BLE
+* comportamento notifiche
+* impostazioni batteria
+* informazioni firmware
+
+Possibile schermata:
+
+PORTACHIAVE
+
+BLE: ON
+Wi-Fi: ON
+Batteria: 82%
+Firmware: vX.X
+
+[Impostazioni]
+
+---
+
+# 10. OTA
+
+Implementare in futuro aggiornamento firmware via Wi-Fi.
+
+Obiettivo:
+
+non dover collegare sempre USB + PlatformIO.
+
+Schema:
+
+Nuova versione
+↓
+telefono/browser
+↓
+"AGGIORNA"
+↓
+ESP32
+↓
+installazione firmware
+↓
+riavvio
+
+Da implementare solo dopo avere una gestione stabile del firmware.
+
+---
+
+# 11. MENU / GUI
+
+Il PortaChiave dovrebbe eventualmente avere un piccolo sistema di menu.
+
+Possibile struttura:
+
+PORTACHIAVE
+
+> Bluetooth
+> Wi-Fi
+> Batteria
+> Sensori
+> Trova telefono
+> Impostazioni
+> Info
+
+Controllo tramite:
+
+* pulsante
+* encoder
+* eventualmente touchscreen se in futuro si cambia display
+
+Gli occhi possono rimanere l'interfaccia principale durante l'utilizzo normale.
+
+---
+
+# 12. INPUT
+
+Aggiungere in futuro uno o più pulsanti.
+
+Possibili azioni:
+
+CLICK:
+azione principale
+
+DOPPIO CLICK:
+altra funzione
+
+PRESSIONE LUNGA:
+menu
+
+Esempio:
+
+1 click → trova telefono
+
+2 click → stato batteria
+
+pressione lunga → menu
+
+---
+
+# 13. STORAGE
+
+Usare la flash interna dell'ESP32 per salvare:
+
+* impostazioni
+* nome dispositivo
+* configurazione BLE
+* configurazione Wi-Fi
+* preferenze occhi
+* impostazioni sleep
+* profili
+* piccoli log
+
+In futuro eventualmente aggiungere SD.
+
+Possibile struttura:
+
+/config
+/settings
+/profiles
+/logs
+/animations
+
+---
+
+# 14. SISTEMA A "APP"
+
+Prendere ispirazione dalla struttura della repository Flipper-Zero-ESP32-Port.
+
+Possibile struttura futura:
+
+PortaChiave
+│
+├── RobotEyes
+├── BLE
+├── WiFi
+├── Battery
+├── Power
+├── Input
+├── Notifications
+├── Storage
+├── Settings
+└── Apps
+├── FindPhone
+├── Battery
+├── BLEScanner
+├── Sensors
+└── Games
+
+L'obiettivo è rendere il firmware modulare.
+
+Aggiungere una nuova funzione non deve richiedere di modificare tutto il progetto.
+
+---
+
+# 15. ESP-NOW
+
+Funzione da valutare in futuro.
+
+Possibile utilizzo:
+
+PortaChiave
+↓ ESP-NOW
+ESP32 secondario
+
+Possibili ESP32 secondari:
+
+* casa
+* macchina
+* scrivania
+* zaino
+
+Potrebbe permettere di creare una piccola rete di dispositivi personali.
+
+Funzione NON prioritaria.
+
+---
+
+# 16. NFC
+
+Possibile aggiunta futura usando un modulo PN532.
+
+Funzioni possibili:
+
+* lettura tag NFC
+* riconoscimento tag personali
+* salvataggio identificativi
+* interazione con il PortaChiave
+* eventuale interfaccia NFC dedicata
+
+Hardware aggiuntivo necessario.
+
+Funzione da valutare dopo BLE/Wi-Fi/batteria.
+
+---
+
+# 17. INFRAROSSI
+
+Possibile aggiunta futura.
+
+Hardware:
+
+* LED IR
+* ricevitore IR
+
+Possibili funzioni:
+
+* telecomando TV
+* climatizzatore
+* dispositivi compatibili
+* apprendimento di telecomandi
+
+Funzione secondaria.
+
+---
+
+# 18. SD CARD
+
+Possibile espansione futura.
+
+Utilizzo:
+
+* animazioni
+* profili
+* configurazioni
+* log
+* file
+* eventuali risorse del firmware
+
+Non necessaria nella prima versione ESP32.
+
+---
+
+# 19. SENSORI
+
+Possibili sensori futuri:
+
+* accelerometro
+* giroscopio
+* temperatura
+* luminosità
+* prossimità
+
+Il sensore di movimento sarebbe particolarmente utile.
+
+Esempio:
+
+Portachiavi fermo:
+😴
+
+Portachiavi preso:
+👀
+
+Movimento improvviso:
+😯
+
+Movimento in modalità antifurto:
+😡 / allarme
+
+---
+
+# 20. FUNZIONE ANTI-SMARRIMENTO
+
+Possibile funzione futura basata su BLE.
+
+Se il telefono si allontana:
+
+* disconnessione BLE
+* notifica
+* vibrazione/buzzer
+* occhi preoccupati
+* eventuale registrazione evento
+
+Quando il telefono torna:
+
+* riconnessione
+* animazione positiva
+
+---
+
+# 21. ESPERIENZA "ROBOT"
+
+Gli occhi non devono essere soltanto estetici.
+
+Devono diventare l'interfaccia visiva del PortaChiave.
+
+Esempi:
+
+SLEEP:
+😴
+
+WAKE:
+👀
+
+CONNESSO:
+🙂
+
+DISCONNESSO:
+😰
+
+BATTERIA BASSA:
+😫
+
+CERCA TELEFONO:
+🤔
+
+TELEFONO TROVATO:
+😄
+
+MOVIMENTO:
+😯
+
+ALLARME:
+😡
+
+ERRORE:
+😵
+
+Questo sistema dovrebbe essere centralizzato nel futuro `Notification System`.
+
+---
+
+# 22. ARCHITETTURA FUTURA
+
+Obiettivo indicativo:
+
+ESP32
+│
+├── Core
+├── RobotEyes
+├── BLE
+├── WiFi
+├── Power
+├── Battery
+├── Input
+├── Notifications
+├── Storage
+├── Settings
+├── Sensors
+└── Apps
+├── FindPhone
+├── BLE
+├── Battery
+├── Sensors
+├── NFC
+└── IR
+
+Il firmware deve essere modulare.
+
+---
+
+# 23. ROADMAP
+
+## FASE 1 — ATTUALE
+
+ESP8266 + OLED
+
+* RobotEyes
+* Sleep
+* respirazione
+* Z
+* blink
+* gaze
+* Wi-Fi
+* wake quando telefono collegato
+
+QUESTA PARTE È FUNZIONANTE E NON VA ROTTA.
+
+---
+
+## FASE 2 — ESP32
+
+* ESP32
+* OLED
+* RobotEyes
+* BLE
+* Wi-Fi
+* pulsanti
+* battery monitoring
+* power management
+
+---
+
+## FASE 3 — FIRMWARE MODULARE
+
+* Core
+* BLE
+* Wi-Fi
+* Battery
+* Power
+* Input
+* Notifications
+* Storage
+* Settings
+* Apps
+
+---
+
+## FASE 4 — FUNZIONI SMART
+
+* trova telefono
+* anti-smarrimento
+* notifiche
+* web interface
+* OTA
+* sensori
+* profili
+* impostazioni
+
+---
+
+## FASE 5 — ESPANSIONI HARDWARE
+
+Possibili:
+
+* PN532 NFC
+* IR
+* SD
+* accelerometro/IMU
+* buzzer
+* vibrazione
+* LED
+* eventuali ESP32 secondari tramite ESP-NOW
+
+---
+
+# 24. COSA NON FARE SUBITO
+
+Non trasformare subito il PortaChiave in un clone completo di Flipper Zero.
+
+Non aggiungere contemporaneamente:
+
+* NFC
+* IR
+* SD
+* BLE
+* Wi-Fi
+* sensori
+* menu
+* OTA
+* app
+* ecc.
+
+Prima bisogna avere una base ESP32 stabile.
+
+La repository Flipper-Zero-ESP32-Port deve essere considerata soprattutto una fonte di ispirazione architetturale e tecnica.
+
+---
+
+# 25. PRINCIPIO FONDAMENTALE DEL PROGETTO
+
+Il PortaChiave deve essere:
+
+**piccolo + utile + personalizzato + a basso consumo + modulare.**
+
+Gli occhi RobotEyes devono rimanere il tratto distintivo del dispositivo.
+
+Non vogliamo semplicemente fare un "Flipper Zero economico".
+
+Vogliamo costruire:
+
+**un portachiavi intelligente con una piccola personalità robotica.**
+
+---
+
+# 26. PRIORITÀ RIASSUNTA
+
+### 🔥 PRIORITÀ MASSIMA
+
+1. ESP32
+2. BLE
+3. Battery
+4. Power Management
+5. Find Phone
+6. Notifications
+7. Pulsanti
+
+### 🟠 PRIORITÀ MEDIA
+
+8. Web Interface
+9. OTA
+10. Settings/Menu
+11. Storage
+12. Sensore movimento
+13. Anti-smarrimento
+
+### 🟡 FUTURO
+
+14. ESP-NOW
+15. NFC
+16. IR
+17. SD
+18. sistema ad applicazioni avanzato
+
+La parte RF/pentest della repository Flipper non è considerata una priorità del PortaChiave.
+
+---
+
+# 27. REGOLA PER I FUTURI SVILUPPI
+
+Quando si aggiunge una nuova funzione:
+
+1. non rompere le funzioni già funzionanti;
+2. mantenere RobotEyes separato dalla logica hardware;
+3. evitare codice duplicato;
+4. creare moduli separati;
+5. utilizzare eventi/notifiche per comunicare tra moduli;
+6. progettare pensando alla batteria;
+7. testare una funzione alla volta;
+8. fare backup prima di modifiche importanti.
+
+Il progetto attuale deve essere considerato la base stabile del futuro PortaChiave.

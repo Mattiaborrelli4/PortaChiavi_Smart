@@ -1,0 +1,419 @@
+Voglio che tu intervenga sul progetto ESP8266/portachiavi esistente per migliorare la parte grafica e le reazioni del dispositivo.
+
+IMPORTANTE:
+
+* Prima di modificare il codice, analizza attentamente l'implementazione attuale.
+* Non riscrivere da zero sistemi che funzionano già.
+* Mantieni la struttura e le funzionalità esistenti, migliorandole dove necessario.
+* Voglio un'implementazione modulare, così in futuro sarà facile aggiungere altri stili di occhi, animazioni ed espressioni.
+* Non rompere le funzioni già implementate.
+* Dopo l'analisi, modifica direttamente il codice necessario e verifica che le modifiche siano coerenti con l'architettura attuale.
+
+# 1. SISTEMA DEI TRE TIPI DI OCCHI
+
+Voglio introdurre tre diversi stili grafici selezionabili dalle impostazioni del telefono.
+
+### STILE 1 — CLASSIC
+
+È lo stile che stiamo utilizzando attualmente:
+
+* occhi normali
+* pupille
+* animazioni/espressioni già esistenti
+* mantenere il comportamento attuale come base
+
+Non voglio sostituire questo sistema: voglio conservarlo e migliorarlo solo nei dettagli necessari.
+
+### STILE 2 — FILLED
+
+Questo stile deve essere ispirato al sistema grafico presente nella repository che avevamo analizzato precedentemente.
+
+Caratteristiche:
+
+* niente pupille
+* occhi completamente pieni/colorati
+* forma più semplice e pulita
+* mantenere comunque le espressioni e le animazioni compatibili con il sistema attuale
+
+L'obiettivo è avere un aspetto visivamente molto diverso dal Classic, ma mantenere lo stesso sistema di emozioni.
+
+### STILE 3 — AGGRESSIVE
+
+Voglio un terzo stile più aggressivo e tecnologico, ispirato esteticamente all'interfaccia/atmosfera di Watch Dogs 2.
+
+NON copiare asset proprietari del gioco.
+
+Prendere solamente ispirazione dal concetto:
+
+* occhi più aggressivi
+* forme più taglienti
+* effetto digitale/meccanico
+* possibilità di elementi che ricordino uno scheletro o una struttura interna
+* look più "glitch/hacker"
+* espressioni più dure
+
+Deve comunque essere adattato alle dimensioni reali del display dell'ESP8266.
+
+# 2. SELEZIONE DAL TELEFONO
+
+Nelle impostazioni dell'interfaccia web voglio poter scegliere:
+
+* Classic
+* Filled
+* Aggressive
+
+Quando cambio modalità dal telefono:
+
+1. il dispositivo riceve immediatamente il comando;
+2. applica il nuovo renderer;
+3. mostra una piccola reazione visiva al cambio;
+4. salva la scelta nella memoria persistente dell'ESP8266.
+
+La modalità scelta DEVE rimanere memorizzata dopo:
+
+* riavvio
+* spegnimento
+* nuova accensione
+
+Quindi utilizzare il sistema di persistenza già presente nel progetto oppure introdurne uno appropriato se necessario.
+
+NON voglio che il cambio modalità venga perso al reboot.
+
+# 3. NON DUPLICARE IL SISTEMA DELLE EMOZIONI
+
+Il progetto possiede già un sistema di emozioni/animazioni.
+
+Non voglio creare tre sistemi completamente separati.
+
+Organizza il sistema possibilmente in maniera simile a:
+
+EyeManager
+├── ClassicRenderer
+├── FilledRenderer
+└── AggressiveRenderer
+
+Il sistema delle emozioni dovrebbe rimanere comune, mentre il renderer decide COME viene rappresentata l'emozione.
+
+In questo modo, ad esempio:
+
+emotion = happy
+
+può essere visualizzata in modo diverso a seconda dello stile degli occhi.
+
+Questo deve permettere in futuro di aggiungere facilmente un quarto stile.
+
+# 4. REAZIONE A OGNI AZIONE DAL TELEFONO
+
+Questa è una parte IMPORTANTE.
+
+Voglio che il portachiavi non sembri passivo.
+
+Ogni volta che l'utente esegue una funzione dal telefono, il dispositivo deve avere una piccola reazione visiva coerente con ciò che sta facendo.
+
+Esempi:
+
+* cambio degli occhi → piccola reazione di sorpresa/cambio modalità
+* avvio Wi-Fi scan → passa all'animazione Wi-Fi
+* avvio camera → reazione dedicata
+* visualizzazione QR → reazione coerente prima di mostrare il QR
+* comando ricevuto → piccolo feedback
+* operazione terminata → reazione di completamento
+* errore → reazione negativa
+* operazione che richiede tempo → reazione di attesa
+
+Non voglio però animazioni casuali messe ovunque.
+
+Le reazioni devono avere un significato.
+
+L'obiettivo è far sembrare il portachiavi un piccolo dispositivo "vivo", che reagisce a quello che gli viene ordinato.
+
+# 5. NUOVA ANIMAZIONE WIFI SCAN
+
+Qui voglio cambiare completamente l'idea precedente.
+
+Quando viene avviato uno scan Wi-Fi, NON devono comparire gli occhi.
+
+Lo schermo deve essere dedicato esclusivamente all'animazione Wi-Fi.
+
+Voglio un simbolo Wi-Fi grande e centrale.
+
+L'animazione deve partire dal basso/centro del simbolo e costruire progressivamente il Wi-Fi.
+
+L'idea visiva è:
+
+1. compare inizialmente il piccolo arco/cerchio centrale;
+2. questo si espande lentamente;
+3. vengono aggiunte progressivamente le onde;
+4. le onde non devono apparire semplicemente "di colpo";
+5. devono esserci sfumature/transizioni;
+6. il simbolo deve sembrare che si stia caricando/espandendo;
+7. una volta completato lo scan, deve esserci una piccola animazione finale come se il simbolo avesse "agganciato" o completato la ricerca.
+
+Quindi il concetto deve essere:
+
+SCANNING
+→ costruzione progressiva del simbolo Wi-Fi
+→ completamento
+→ piccolo effetto di "lock/aggancio"
+→ risultato dello scan
+
+Durante questa animazione NON devono comparire gli occhi.
+
+# 6. ESPRESSIONE "LAG / DISPLAY GLITCH"
+
+Voglio aggiungere una nuova particolare espressione.
+
+Il portachiavi deve poter simulare un piccolo malfunzionamento/glitch del display.
+
+Non deve sembrare semplicemente un effetto grafico casuale.
+
+Deve sembrare che:
+
+"il dispositivo sta laggando e questa cosa gli fa male."
+
+L'animazione dovrebbe quindi combinare:
+
+* piccoli blocchi/glitch in punti precisi
+* porzioni del volto che si spostano leggermente
+* frame che sembrano saltare
+* piccole distorsioni
+* eventuali parti dell'occhio che vengono momentaneamente corrotte
+* micro-freeze
+* piccole variazioni della posizione
+* recupero progressivo
+
+Ma l'espressione deve comunicare anche una reazione emotiva.
+
+Per esempio:
+
+1. espressione normale;
+2. piccolo glitch;
+3. il volto sembra accorgersene;
+4. reazione di fastidio/dolore;
+5. glitch più forte;
+6. breve deformazione;
+7. ritorno alla normalità.
+
+NON deve essere un semplice "glitch effect".
+
+Deve essere una vera emozione del dispositivo.
+
+Per esempio possiamo considerarla come:
+
+emotion = lag / corrupted / pain
+
+Il sistema deve permettere di richiamarla anche in futuro quando un'operazione causa problemi o rallentamenti.
+
+# 7. QR CODE DELLA TELECAMERA
+
+Quando viene mostrato il QR code per la telecamera, voglio una schermata estremamente pulita.
+
+DEVONO ESSERCI SOLO:
+
+* QR code
+
+Nient'altro.
+
+Niente:
+
+* testo
+* titolo
+* icone
+* messaggi
+* decorazioni
+* occhi
+
+Il QR deve essere abbastanza grande da poter essere scansionato facilmente con un iPhone.
+
+Usare il maggior spazio utile possibile del display mantenendo però un margine sufficiente per il QR.
+
+# 8. PROBLEMA DELLA PARTE SUPERIORE DEL DISPLAY
+
+Prestare particolare attenzione alla parte più alta del display.
+
+Nel progetto abbiamo già riscontrato un problema simile con l'espressione "sleeping" e con la Z:
+
+quando il contenuto viene posizionato troppo vicino alla riga superiore del display, quella zona può risultare alterata/giallastra.
+
+Questo problema sembra essere legato alla riga più esterna/superiore del display, non al QR in sé.
+
+Per questo motivo NON voglio semplicemente generare un QR enorme che utilizzi ogni singolo pixel.
+
+Bisogna creare una "safe area" del display.
+
+Il renderer del QR deve:
+
+* evitare la riga/zona superiore problematica;
+* non posizionare moduli del QR nella zona che può alterarne il colore;
+* mantenere comunque il QR sufficientemente grande;
+* mantenere un quiet zone/margine appropriato;
+* assicurarsi che il contrasto rimanga sufficiente per la scansione.
+
+Se necessario, analizza il driver del display e determina esattamente quali righe/pixel devono essere considerate non sicure.
+
+La priorità è:
+
+1. QR scansionabile;
+2. QR grande;
+3. niente zona gialla;
+4. utilizzare tutto lo spazio rimanente possibile.
+
+# 9. ANIMAZIONE QR
+
+Quando l'utente richiede il QR dal telefono:
+
+NON mostrare immediatamente il QR senza reazione.
+
+Prima deve esserci una piccola reazione del portachiavi, poi deve comparire il QR.
+
+La sequenza dovrebbe essere qualcosa del tipo:
+
+comando ricevuto
+→ reazione
+→ preparazione
+→ QR visualizzato
+
+Una volta mostrato il QR, però, deve rimanere PERFETTAMENTE STATICO.
+
+Niente animazioni sul QR.
+
+Niente occhi.
+
+Niente elementi che si sovrappongono.
+
+Questo è importante perché il telefono deve poterlo scansionare facilmente.
+
+# 10. ARCHITETTURA DELLE ANIMAZIONI
+
+Organizza le nuove animazioni in maniera modulare.
+
+Idealmente avere qualcosa concettualmente simile a:
+
+AnimationManager
+├── WifiScanAnimation
+├── QrAnimation
+├── LagAnimation
+├── CommandReaction
+└── ErrorReaction
+
+Non è obbligatorio utilizzare esattamente questi nomi: usa l'architettura già presente nel progetto se è migliore.
+
+L'importante è evitare di inserire tutta la logica direttamente dentro gli handler HTTP o dentro il codice dello scan.
+
+# 11. SISTEMA DI PRIORITÀ DEL DISPLAY
+
+Dato che ora abbiamo occhi, emozioni, animazioni e schermate dedicate, implementa o migliora un sistema di priorità.
+
+Per esempio:
+
+QR
+↓
+WiFi Scan
+↓
+Error / Critical reaction
+↓
+Specific operation reaction
+↓
+Emotion
+↓
+Idle eyes
+
+L'idea è che una schermata importante come il QR non venga sovrascritta dall'animazione degli occhi.
+
+Allo stesso modo, durante lo scan Wi-Fi non devono comparire accidentalmente le normali emozioni.
+
+Quando l'operazione termina, il controllo deve tornare automaticamente al normale sistema di emozioni/occhi.
+
+# 12. ATTENZIONE ALLE DIMENSIONI DEL DISPLAY
+
+Prima di implementare le nuove animazioni, controlla:
+
+* risoluzione esatta;
+* orientamento;
+* coordinate;
+* sistema di clipping;
+* gestione delle righe;
+* eventuale area problematica superiore;
+* primitive grafiche già disponibili;
+* frequenza di refresh.
+
+Non assumere coordinate basandoti soltanto sulle dimensioni teoriche.
+
+Usa le coordinate effettivamente utilizzate dal progetto.
+
+# 13. COMPATIBILITÀ CON LE EMOZIONI ESISTENTI
+
+Tutte le emozioni già esistenti devono continuare a funzionare.
+
+Dove possibile, adattale ai tre renderer.
+
+Per esempio:
+
+Classic:
+occhi + pupille → happy
+
+Filled:
+occhi pieni → happy
+
+Aggressive:
+occhi aggressivi → happy, ma reinterpretato nello stile grafico aggressivo
+
+Non voglio perdere le emozioni esistenti soltanto perché introduciamo tre renderer.
+
+# 14. QUALITÀ DELLE ANIMAZIONI
+
+Le animazioni non devono essere semplici cambi di frame casuali.
+
+Devono avere:
+
+* easing dove appropriato;
+* transizioni fluide;
+* timing coerente;
+* durata non eccessiva;
+* nessun flickering indesiderato;
+* nessun tearing visibile se evitabile.
+
+Considera i limiti hardware dell'ESP8266.
+
+Non creare animazioni troppo pesanti che causino rallentamenti reali.
+
+Il "lag" deve essere un effetto VOLONTARIO dell'espressione lag, non un problema causato dal codice.
+
+# 15. VERIFICA FINALE
+
+Dopo le modifiche verifica almeno:
+
+1. cambio Classic → Filled;
+2. cambio Filled → Aggressive;
+3. riavvio ESP8266 e verifica della persistenza dello stile;
+4. avvio Wi-Fi scan;
+5. animazione progressiva del Wi-Fi;
+6. completamento scan;
+7. reazione ai comandi dal telefono;
+8. visualizzazione QR;
+9. QR senza testo o elementi sovrapposti;
+10. QR posizionato fuori dalla zona superiore problematica;
+11. scansione QR con smartphone;
+12. funzionamento delle emozioni esistenti;
+13. nuova animazione lag/glitch;
+14. ritorno dall'animazione speciale allo stato normale;
+15. verifica che nessuna nuova animazione blocchi il normale funzionamento del dispositivo.
+
+Prima di concludere, mostrami quali file hai modificato e spiegami brevemente:
+
+* dove viene gestita la selezione dei tre stili;
+* dove viene salvata la preferenza;
+* come viene gestita la priorità delle schermate;
+* dove si trova l'animazione Wi-Fi;
+* dove si trova il renderer QR;
+* come hai risolto la zona superiore problematica;
+* dove viene gestita l'espressione lag/glitch;
+* come vengono generate le reazioni ai comandi provenienti dal telefono.
+
+IMPORTANTE FINALE:
+
+Non limitarti a fare una modifica superficiale.
+
+Prima comprendi come funziona il sistema attuale, poi integra queste funzionalità mantenendo compatibilità con ciò che esiste già.
+
+Se trovi una soluzione migliore rispetto a quella descritta per ottenere lo stesso risultato visivo, puoi adottarla, purché non elimini funzionalità esistenti e mantenga il comportamento richiesto.
