@@ -1,0 +1,590 @@
+Adesso il dispositivo ESP8266 è **COLLEGATO FISICAMENTE al PC** ed è visibile sulla:
+
+`COM6`
+
+Questa volta devi eseguire una vera sessione di **UPLOAD + SERIAL DEBUG + HARDWARE TEST**.
+
+Il problema prioritario da risolvere è:
+
+> **La rete Wi-Fi/SoftAP del PortaChiave NON compare nell'elenco delle reti Wi-Fi disponibili**, nonostante il firmware compili correttamente.
+
+NON considerare più questo problema come "non testabile": l'ESP8266 è collegato su COM6 e deve essere testato realmente.
+
+---
+
+# PERCORSI
+
+### Progetto principale — MODIFICABILE
+
+`C:\Users\matti\Desktop\portachiave`
+
+### Vecchia versione funzionante — SOLO RIFERIMENTO
+
+`C:\Users\matti\Desktop\test`
+
+NON modificare mai `C:\Users\matti\Desktop\test`.
+
+---
+
+# REGOLA FONDAMENTALE
+
+Questa volta NON limitarti a:
+
+`platformio run`
+
+La compilazione è già stata verificata.
+
+Devi eseguire realmente:
+
+```text
+BUILD
+↓
+UPLOAD su COM6
+↓
+SERIAL MONITOR
+↓
+RESET ESP
+↓
+analisi boot
+↓
+verifica inizializzazione Wi-Fi
+↓
+verifica SoftAP
+↓
+scansione reti dal telefono/PC
+↓
+diagnosi
+↓
+correzione
+↓
+nuovo BUILD
+↓
+nuovo UPLOAD
+↓
+RETEST
+```
+
+Non dichiarare PASS per un test hardware se non è stato realmente eseguito.
+
+---
+
+# FASE 1 — VERIFICA COM6
+
+Prima controlla:
+
+- COM6 esistente;
+- dispositivo associato;
+- porta utilizzabile da PlatformIO;
+- eventuale porta occupata da un altro processo.
+
+Se COM6 è disponibile, utilizzala esplicitamente per l'upload e per il monitor seriale.
+
+Se l'upload fallisce perché la porta è occupata:
+
+1. individua il processo che la sta utilizzando;
+2. chiudi il monitor seriale precedente;
+3. riprova;
+4. NON modificare il codice per aggirare il problema.
+
+---
+
+# FASE 2 — BUILD
+
+Esegui:
+
+```text
+platformio run
+```
+
+Se fallisce:
+
+- correggi SOLO gli errori necessari;
+- ricompila;
+- non procedere con un firmware che non compila.
+
+Se compila, procedi immediatamente all'upload.
+
+---
+
+# FASE 3 — UPLOAD REALE
+
+Esegui l'upload sulla:
+
+`COM6`
+
+Dopo l'upload verifica che termini correttamente.
+
+Se l'upload fallisce:
+
+- raccogli l'errore completo;
+- verifica baud rate;
+- verifica porta;
+- verifica reset/bootloader;
+- riprova una volta;
+- non modificare il firmware per problemi di connessione USB.
+
+---
+
+# FASE 4 — SERIAL MONITOR
+
+Apri il monitor seriale sulla COM6.
+
+Usa il baud rate configurato dal progetto/PlatformIO.
+
+Dopo aver aperto il monitor:
+
+1. resetta l'ESP8266;
+2. acquisisci l'intero log di boot;
+3. attendi che il dispositivo completi l'inizializzazione;
+4. non interrompere il processo troppo presto.
+
+Cerca esplicitamente:
+
+- boot;
+- reset reason;
+- watchdog;
+- crash;
+- exception;
+- heap;
+- inizializzazione Wi-Fi;
+- modalità Wi-Fi;
+- SoftAP;
+- SSID;
+- IP;
+- DHCP;
+- eventuali errori.
+
+---
+
+# FASE 5 — DEBUG PRIORITARIO DEL SOFTAP
+
+Questo è il problema principale.
+
+Nel codice individua esattamente dove viene inizializzato il SoftAP.
+
+Cerca tutte le chiamate relative a:
+
+```cpp
+WiFi.mode(...)
+WiFi.softAP(...)
+WiFi.softAPConfig(...)
+WiFi.disconnect(...)
+WiFi.begin(...)
+```
+
+e tutte le funzioni che possono modificare la modalità Wi-Fi dopo l'avvio.
+
+Devi ricostruire il flusso completo:
+
+```text
+BOOT
+ ↓
+inizializzazione Wi-Fi
+ ↓
+WiFi.mode(...)
+ ↓
+configurazione AP
+ ↓
+WiFi.softAP(...)
+ ↓
+eventuale configurazione IP
+ ↓
+altri moduli
+ ↓
+LOOP
+```
+
+Determina se il SoftAP:
+
+1. viene effettivamente inizializzato;
+2. viene inizializzato con successo;
+3. riceve l'SSID corretto;
+4. rimane attivo;
+5. viene successivamente disabilitato/modificato da qualche altra parte del firmware.
+
+---
+
+# FASE 6 — LOG TEMPORANEI DI DEBUG
+
+Se il codice attualmente non fornisce abbastanza informazioni, aggiungi **temporaneamente** log seriali mirati.
+
+NON aggiungere log ovunque.
+
+Aggiungi informazioni come:
+
+```text
+[WIFI] Initializing WiFi
+[WIFI] Mode: ...
+[WIFI] SSID: ...
+[WIFI] Channel: ...
+[WIFI] softAP result: ...
+[WIFI] AP IP: ...
+[WIFI] AP status: ...
+```
+
+I log devono permettere di capire se:
+
+```cpp
+WiFi.softAP(...)
+```
+
+restituisce successo o fallimento.
+
+Devono inoltre permettere di verificare lo stato del SoftAP dopo l'inizializzazione.
+
+Se esiste già un sistema di logging nel progetto, UTILIZZA QUELLO invece di crearne uno nuovo.
+
+---
+
+# FASE 7 — VERIFICA SSID
+
+Il progetto dovrebbe generare un SSID del tipo:
+
+```text
+PortaChiave-XXXXXX
+```
+
+dove `XXXXXX` corrisponde agli ultimi 6 caratteri del MAC secondo la logica attuale.
+
+Dal log seriale devi determinare l'SSID esatto generato dall'ESP.
+
+Poi verifica fisicamente dal PC/telefono se compare.
+
+NON cercare solamente una rete chiamata esattamente:
+
+`PortaChiave`
+
+perché potrebbe avere il suffisso MAC.
+
+---
+
+# FASE 8 — TEST REALE DAL PC
+
+Dopo il boot:
+
+1. aggiorna l'elenco delle reti Wi-Fi sul PC;
+2. cerca l'SSID del PortaChiave;
+3. attendi almeno alcuni secondi;
+4. verifica nuovamente;
+5. se possibile verifica anche con un secondo dispositivo Wi-Fi.
+
+Risultati possibili:
+
+### A — Rete visibile
+
+PASS.
+
+Procedi alla connessione.
+
+### B — Rete NON visibile
+
+FAIL.
+
+NON dichiarare il test concluso.
+
+Continua immediatamente con il debug del SoftAP.
+
+---
+
+# FASE 9 — CONFRONTO CON LA VECCHIA VERSIONE
+
+Se il SoftAP continua a non comparire:
+
+confronta in modo mirato:
+
+`C:\Users\matti\Desktop\portachiave`
+
+con:
+
+`C:\Users\matti\Desktop\test`
+
+Cerca le differenze relative esclusivamente a:
+
+- inizializzazione Wi-Fi;
+- `WiFi.mode`;
+- `WiFi.softAP`;
+- `WiFi.softAPConfig`;
+- canale;
+- SSID;
+- password;
+- gestione IP;
+- DHCP;
+- chiamate Wi-Fi successive;
+- ordine di inizializzazione;
+- eventuali funzioni che cambiano modalità Wi-Fi.
+
+NON copiare l'intero vecchio sistema.
+
+Individua la differenza che può spiegare il comportamento.
+
+---
+
+# FASE 10 — CONTROLLO PARTICOLARMENTE IMPORTANTE
+
+Verifica se qualche parte del firmware dopo l'avvio del SoftAP esegue operazioni del tipo:
+
+```cpp
+WiFi.mode(WIFI_STA)
+WiFi.mode(...)
+WiFi.disconnect(...)
+WiFi.begin(...)
+```
+
+o qualsiasi altra operazione che possa disattivare il SoftAP.
+
+Controlla inoltre se il progetto deve utilizzare:
+
+```cpp
+WIFI_AP
+```
+
+oppure:
+
+```cpp
+WIFI_AP_STA
+```
+
+e determina quale modalità era prevista dall'architettura del progetto.
+
+NON cambiare modalità arbitrariamente.
+
+Devi prima stabilire quale modalità è corretta.
+
+---
+
+# FASE 11 — CONTROLLO CANALE
+
+Il codice attualmente indica il canale 1.
+
+Verifica realmente dal firmware e dai log che il SoftAP venga configurato sul canale previsto.
+
+Se il canale è configurato esplicitamente, verifica che:
+
+- sia valido;
+- venga effettivamente applicato;
+- non venga successivamente modificato.
+
+NON cambiare il canale semplicemente per tentativi casuali.
+
+---
+
+# FASE 12 — CONTROLLO ALIMENTAZIONE / RESET
+
+Se dai log risulta che il SoftAP viene inizializzato correttamente ma la rete non viene comunque rilevata:
+
+controlla se l'ESP:
+
+- si resetta;
+- entra in watchdog;
+- perde alimentazione;
+- riavvia il Wi-Fi;
+- cambia modalità dopo l'inizializzazione.
+
+Controlla il log seriale per l'intero periodo in cui stai cercando la rete.
+
+---
+
+# FASE 13 — CORREZIONE
+
+Solo dopo aver identificato la causa applica la correzione.
+
+Regole:
+
+- modifica minima;
+- non riscrivere il sistema Wi-Fi;
+- non eliminare funzionalità;
+- non ripristinare l'intero vecchio progetto;
+- mantieni i fix di sicurezza già presenti;
+- mantieni RobotEyes;
+- mantieni Camera;
+- mantieni il sistema di scansione;
+- mantieni autenticazione per-client.
+
+La correzione deve risolvere il problema senza introdurre regressioni.
+
+---
+
+# FASE 14 — RETEST OBBLIGATORIO
+
+Dopo ogni modifica:
+
+```text
+platformio run
+↓
+upload COM6
+↓
+serial monitor
+↓
+reset
+↓
+verifica boot
+↓
+verifica SoftAP
+↓
+verifica SSID dal PC
+```
+
+Se la rete compare:
+
+1. connettiti;
+2. verifica IP;
+3. apri dashboard;
+4. verifica che la connessione rimanga stabile.
+
+---
+
+# FASE 15 — TEST FUNZIONALI SUCCESSIVI
+
+Una volta risolto il SoftAP, esegui almeno:
+
+### Wi-Fi
+- AP visibile;
+- connessione;
+- IP;
+- stabilità.
+
+### Dashboard
+- caricamento;
+- navigazione;
+- API principali.
+
+### Auth
+- client non autenticato;
+- client autenticato;
+- secondo client;
+- verifica isolamento sessione.
+
+### Scan
+- avvio tramite `/api/wifi/scan`;
+- polling tramite `/api/net/scan`;
+- scansione già in corso;
+- completamento;
+- 0 reti;
+- timeout se riproducibile.
+
+### RobotEyes
+- OLED;
+- occhi;
+- emozioni;
+- stabilità.
+
+### Camera
+- inizializzazione;
+- update;
+- funzionamento.
+
+---
+
+# REGOLA SPECIALE SUL DEBUG
+
+Se trovi un problema:
+
+NON dire semplicemente:
+
+> "potrebbe essere X"
+
+Devi cercare di verificarlo.
+
+Per ogni bug produci:
+
+```text
+PROBLEMA:
+Come è stato riprodotto:
+
+EVIDENZA:
+Log / comportamento osservato:
+
+CAUSA:
+Causa individuata:
+
+CORREZIONE:
+Modifica effettuata:
+
+BUILD:
+PASS/FAIL
+
+UPLOAD:
+PASS/FAIL
+
+RETEST:
+PASS/FAIL
+
+REGRESSIONI:
+Nessuna / elenco
+```
+
+---
+
+# CRITERIO DI SUCCESSO
+
+Il problema principale è considerato RISOLTO solamente quando:
+
+1. firmware compilato;
+2. firmware caricato realmente su COM6;
+3. ESP avviato;
+4. SoftAP inizializzato correttamente;
+5. SSID rilevato dal PC/telefono;
+6. dispositivo connesso alla rete;
+7. dashboard raggiungibile;
+8. nessun reset/crash anomalo;
+9. test Wi-Fi ripetuto dopo reboot;
+10. i principali test funzionali non presentano regressioni.
+
+---
+
+# IMPORTANTISSIMO
+
+Non fermarti dopo aver trovato una possibile causa nel codice.
+
+**Devi verificare fisicamente che la correzione faccia ricomparire la rete Wi-Fi.**
+
+Se la rete continua a non comparire, continua il debugging e riporta l'evidenza raccolta.
+
+Non dichiarare:
+
+`PASS`
+
+finché il test fisico non è realmente passato.
+
+Alla fine produci un report:
+
+```text
+=== PORTACHIAVE HARDWARE DEBUG REPORT ===
+
+COM:
+BUILD:
+UPLOAD:
+BOOT:
+
+SOFTAP:
+SSID:
+CHANNEL:
+MODE:
+AP INITIALIZATION:
+AP IP:
+
+SSID VISIBILITY:
+PC:
+PHONE:
+
+CONNECTION:
+DASHBOARD:
+
+AUTH:
+SCAN:
+ROBOTEYES:
+CAMERA:
+
+BUG TROVATI:
+CORREZIONI:
+RETEST:
+
+STATO FINALE:
+PASS / FAIL / BLOCKED
+```
+
+Il problema prioritario rimane comunque:
+
+**"Il PortaChiave non compare tra le reti Wi-Fi disponibili."**
+
+Non considerare il lavoro concluso finché questo punto non è stato realmente verificato.

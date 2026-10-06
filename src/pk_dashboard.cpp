@@ -371,13 +371,13 @@ async function loadHome(){
 async function loadStats(){
   var m=await api('/api/modules');
   var cnt=0;
-  if(!m.error){var mj=jget(m);
+  if(!m.error){var mj=m;
     if(Array.isArray(mj)){for(var i=0;i<mj.length;i++)if(mj[i]&&mj[i].perm===true)cnt++;}
     else if(mj){for(var k in mj){if(mj[k]&&mj[k].perm===true)cnt++;}}}
   S.mods=cnt;
   if(S.role==='owner'){
     var s=await api('/api/security/status');
-    if(!s.error){var sj=jget(s);var al=sj.alertsList||sj.alerts||[];S.alerts=(typeof sj.count==='number')?sj.count:al.length;}
+    if(!s.error){var sj=s;var al=sj.alertsList||sj.alerts||[];S.alerts=(typeof sj.count==='number')?sj.count:al.length;}
     else S.alerts=0;
   } else S.alerts=0;
   renderHome();
@@ -500,7 +500,7 @@ function normMods(m){
 async function loadFuncs(){
   var r=await api('/api/modules');
   if(r.error){showError(r.code,r.body,'funcs');return;}
-  var m=jget(r);role(m);
+  var m=r;role(m);
   var rows=normMods(m),h='';
   if(!rows.length)h='<div class="card"><div class="note">Nessun modulo autorizzato.</div></div>';
   for(var i=0;i<rows.length;i++)h+='<button class="big" data-g="'+rows[i].k+'">'+esc(rows[i].n)+'<span class="arr">›</span></button>';
@@ -661,7 +661,7 @@ function devRows(list,label){
 async function loadSec(){
   var s=await api('/api/security/status');
   if(s.error){showError(s.code,s.body,'sec');return;}
-  var sj=jget(s);role(sj);
+  var sj=s;role(sj);
   var al=(sj&&(sj.alertsList||sj.alerts))||[];
   var cnt=(sj&&typeof sj.count==='number')?sj.count:al.length;
   var ah='<div class="row"><b>Alert attivi</b><span>'+cnt+'</span></div>';
@@ -680,7 +680,7 @@ async function loadSec(){
   var dv=await api('/api/security/devices');
   var dt='';
   if(dv.error)dt='<div class="note">Device non disponibili ('+dv.code+')</div>';
-  else{var dj=jget(dv)||dv;
+  else{var dj=dv;
     dt=devRows(dj.clients,'Collegati')+devRows(dj.unknown,'Sconosciuti');}
   $('secDev').innerHTML=dt;
 }

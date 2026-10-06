@@ -566,8 +566,6 @@ void RobotEyes::updateEmotionTransition() {
     
     // Smooth transition - gradually change eye parameters
     float t = easeInOut((float)elapsed / _transitionDuration);
-    // Use easeOutBack for pupil drift during transition for natural-looking movement
-    float t_back = easeOutBack((float)elapsed / _transitionDuration);
     
     // Interpolate eye shape
     uint8_t targetW = _emotionConfigs[_targetEmotion].eyeWidth;
@@ -586,11 +584,6 @@ void RobotEyes::updateEmotionTransition() {
     int8_t targetPY = _emotionConfigs[_targetEmotion].pupilY;
     _leftTarget.pupilX += (int8_t)((targetPX - _leftTarget.pupilX) * t * 0.1f);
     _leftTarget.pupilY += (int8_t)((targetPY - _leftTarget.pupilY) * t * 0.1f);
-    _rightTarget.pupilX = _leftTarget.pupilX;
-    _rightTarget.pupilY = _leftTarget.pupilY;
-    // Apply easeOutBack drift to pupil position for natural transition
-    _leftTarget.pupilX += (int8_t)((targetPX - _leftTarget.pupilX) * 0.05f * (1.0f - t_back));
-    _leftTarget.pupilY += (int8_t)((targetPY - _leftTarget.pupilY) * 0.05f * (1.0f - t_back));
     _rightTarget.pupilX = _leftTarget.pupilX;
     _rightTarget.pupilY = _leftTarget.pupilY;
     

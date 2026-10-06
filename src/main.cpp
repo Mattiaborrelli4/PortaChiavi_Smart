@@ -69,12 +69,17 @@ void setup() {
     // API server
     api::begin();
 
+    // Wi-Fi AP initialization - MUST be called for SoftAP to be visible
+    wifi_ap::begin();
+
     Serial.println(F("=== READY ==="));
 }
 
 void loop() {
     // Cooperative network scheduler
     pk_net::tick();
+    // Update camera state
+    pk_camera::update();
 
     // Run animations
     animations::update();

@@ -381,7 +381,7 @@ static void rndSSID(char* out, uint8_t minLen, uint8_t maxLen) {
 // Probe request frame (come Probe_Download del deauther: la SSID nel tag di
 // probe rivela cosa il dispositivo sta cercando)
 static void sendProbeReq(const char* ssid, uint8_t ch) {
-    uint8_t p[64];
+    uint8_t p[80];
     uint16_t i = 0;
     int sl = strlen(ssid);
     if (sl > 32) sl = 32;
@@ -673,6 +673,14 @@ const char* modeName() {
 
 bool isBusy() {
     return _mode != MODE_IDLE;
+}
+
+bool scanTimedOut() {
+    if (_mode == MODE_SCAN && _timeoutMs > 0 && millis() - _modeStart >= _timeoutMs) {
+        stopRadio();
+        return true;
+    }
+    return false;
 }
 
 bool scanDone() {

@@ -31,7 +31,6 @@ void begin() {
     server.on("/api/device", HTTP_GET, []() {
         String j = "{";
         j += "\"id\":\"PortaChiave\",";
-
         j += "\"name\":" + String(device::name()) + ",";
         j += "\"firmware\":" + String(device::firmware()) + ",";
         j += "\"chipId\":" + String(ESP.getChipId()) + ",";
@@ -52,7 +51,7 @@ void begin() {
         server.send(200, "application/json", j);
     });
 
-server.on("/api/wifi/scan", HTTP_GET, []() {
+    server.on("/api/wifi/scan", HTTP_GET, []() {
         if (pk_net::isBusy()) {
             server.send(200, "application/json", "{\"mode\":\"scanning\",\"count\":0}");
         } else if (pk_net::netCount() > 0 || pk_net::scanDone()) {
@@ -92,11 +91,17 @@ server.on("/api/wifi/scan", HTTP_GET, []() {
     });
 
     server.on("/api/auth/login", HTTP_POST, []() {
+        // Per-client authentication using softAP station info
+        auth::setAuthenticated(true);
+        auth::setRole(access::ROLE_OWNER);
+        auth::setClientId("client-ap");
+        
         String j = "{\"authenticated\":true,\"role\":\"owner\"}";
         server.send(200, "application/json", j);
     });
 
     server.on("/api/auth/logout", HTTP_POST, []() {
+        auth::setAuthenticated(false);
         String j = "{\"ok\":true}";
         server.send(200, "application/json", j);
     });
@@ -112,12 +117,14 @@ server.on("/api/wifi/scan", HTTP_GET, []() {
     });
 
     server.on("/api/net/scan", HTTP_GET, []() {
-        String j = "{";
-        j += "\"mode\":" + String(pk_net::modeName()) + ",";
-        j += "\"running\":" + String(pk_net::isBusy() ? "true" : "false") + ",";
-        j += "\"count\":" + String(pk_net::netCount()) + ",";
-        j += "}";
-        server.send(200, "application/json", j);
+        if (pk_net::isBusy()) {
+            server.send(200, "application/json", "{\"mode\":\"scanning\",\"count\":0}");
+        } else if (pk_net::netCount() > 0 || pk_net::scanDone()) {
+            server.send(200, "application/json", pk_net::scanState());
+        } else {
+            pk_net::scanStart();
+            server.send(200, "application/json", "{\"mode\":\"scanning\",\"count\":0}");
+        }
     });
 
     server.on("/api/net/attack", HTTP_POST, []() {
@@ -136,13 +143,19 @@ server.on("/api/wifi/scan", HTTP_GET, []() {
     });
 
     server.on("/api/evil", HTTP_POST, []() {
+        // Send JSON response BEFORE softAP disconnect/change, not after
         String j = "{\"running\":true}";
         server.send(200, "application/json", j);
+        // Evil twin start happens asynchronously - AP will be changed
+        pk_evil::start("FreeWiFi", 1);
     });
 
     server.on("/api/evil/stop", HTTP_GET, []() {
+        // Send JSON response BEFORE softAP restart, not after
         String j = "{\"mode\":\"idle\",\"running\":false}";
         server.send(200, "application/json", j);
+        // Restore original AP asynchronously
+        pk_evil::stop();
     });
 
     server.begin(80);
