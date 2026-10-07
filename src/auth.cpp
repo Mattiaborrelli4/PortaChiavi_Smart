@@ -11,12 +11,45 @@ static String   _clientId;
 static String   _ownerMac;
 static String   _setupToken;
 
+// Per-client authentication state, keyed by client ID.
+// Maps clientId -> {authenticated, role, sessionStart}
+#define MAX_CLIENTS 8
+static struct {
+    char     clientId[33];
+    bool     authenticated;
+    uint32_t sessionStart;
+    uint8_t  role;
+} _clients[MAX_CLIENTS];
+static uint8_t _clientCount = 0;
+
+static uint8_t findClientById(const char* clientId) {
+    for (uint8_t i = 0; i < _clientCount; i++) {
+        if (strcmp(_clients[i].clientId, clientId) == 0) return i;
+    }
+    return 0xFF;
+}
+
+static uint8_t addClient(const char* clientId) {
+    if (_clientCount >= MAX_CLIENTS) return 0xFF;
+    strcpy(_clients[_clientCount].clientId, clientId);
+    _clients[_clientCount].authenticated = false;
+    _clients[_clientCount].sessionStart = 0;
+    _clients[_clientCount].role = 0;
+    return _clientCount++;
+}
+
+static void resetClientState(uint8_t idx) {
+    _clients[idx].authenticated = false;
+    _clients[idx].sessionStart = 0;
+    _clients[idx].role = 0;
+    memset(_clients[idx].clientId, 0, 33);
+}
+
 // Pulizia stato sessione client (ruolo + identita') dopo logout/timeout.
 static void resetSessionState() {
-    _role = 0;
-    _clientId = "";
-    _ownerMac = "";
-    _setupToken = "";
+    for (uint8_t i = 0; i < _clientCount; i++) {
+        resetClientState(i);
+    }
 }
 
 bool loadSetupToken() {
@@ -47,14 +80,30 @@ void begin() {
 }
 
 void setAuthenticated(bool value, const String& clientId) {
-    _authenticated = value;
+    uint8_t idx = findClientById(clientId.c_str());
+    if (idx == 0xFF) {
+        idx = addClient(clientId.c_str());
+    }
+    _clients[idx].authenticated = value;
     if (value) {
+        _clients[idx].sessionStart = millis();
+        _clients[idx].role = access::ROLE_OWNER;
+        _authenticated = true;
         _sessionStart = millis();
-        if (clientId.length() > 0) _clientId = clientId;
-        Serial.println(F("[Auth] authenticated = true"));
+        _clientId = clientId;
+        Serial.print(F("[Auth] "));
+        Serial.print(clientId);
+        Serial.println(F(" authenticated = true"));
     } else {
-        _sessionStart = 0;
-        resetSessionState();
+        resetClientState(idx);
+        // Se non ci sono più clienti autenticati, resetta lo stato globale
+        bool anyAuthenticated = false;
+        for (uint8_t i = 0; i < _clientCount; i++) {
+            if (_clients[i].authenticated) anyAuthenticated = true;
+        }
+        _authenticated = anyAuthenticated;
+        _sessionStart = anyAuthenticated ? millis() : 0;
+        _clientId = "";
     }
 }
 

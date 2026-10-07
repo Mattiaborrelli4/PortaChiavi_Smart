@@ -14,8 +14,8 @@
 //   L'ESP verifica il token ed imposta authenticated.
 //
 // MODALITA' DEV/TEST (oltre, separata):
-//   Compilata con AUTH_DEV_MODE=1 (default). POST /api/auth/login con
-//   {mode:"dev"} simula authenticated=true. Chiaramente separata: non
+//   Compilata con AUTH_DEV_MODE=0 (default). POST /api/auth/login con
+//   {mode:"dev"} non autentica (modalità reale). Chiaramente separata: non
 //   confondere con il Face ID reale.
 //
 // Sessione con timeout: quando scade authenticated torna a false.

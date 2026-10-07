@@ -72,6 +72,9 @@ void setup() {
     // Wi-Fi AP initialization - MUST be called for SoftAP to be visible
     wifi_ap::begin();
 
+    // Captive portal initialization - MUST be called after WiFi AP is running
+    captive::begin();
+
     Serial.println(F("=== READY ==="));
 }
 
@@ -86,6 +89,9 @@ void loop() {
 
     // Handle HTTP requests
     api::handleClient();
+
+    // Process captive portal DNS queries (CRITICAL for iOS captive detection)
+    captive::process();
 
     // Update eyes - render to display
     eyes.update();
