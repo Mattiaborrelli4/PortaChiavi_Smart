@@ -29,7 +29,7 @@ extern uint32_t songLastUpdate;
 
 void begin() {
     server.on("/", HTTP_GET, []() {
-        server.send(200, "text/html", "<!DOCTYPE html><html lang='it'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>PortaChiave Dashboard</title></head><body><h1>PortaChiave Dashboard</h1><p>Benvenuto nella dashboard del PortaChiave.</p></body></html>");
+        server.send_P(200, "text/html", dashboard::page());
     });
     server.on("/api/device", HTTP_GET, []() {
         String j = "{";
