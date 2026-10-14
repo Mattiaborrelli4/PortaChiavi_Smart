@@ -1,26 +1,135 @@
-La verifica precedente non è corretta: l’HTML inline servito da `GET /` non è la dashboard completa del progetto, ma una pagina minimale con solo titolo e messaggio.
+Lavora sul progetto in:
 
-Correggi `src/pk_api.cpp` in modo che la route:
-
-```cpp
-server.on("/", HTTP_GET, ...)
+```text
+C:\Users\matti\Desktop\portachiave
 ```
 
-serva la dashboard completa già definita in `src/pk_dashboard.cpp`, usando l’interfaccia esistente dichiarata nell’header — ad esempio `dashboard::page()` e `server.send_P(...)`, se sono i nomi effettivi nel codice.
+Obiettivo: verificare e ripristinare il funzionamento reale su iPhone del PortaChiave. Prima delle modifiche recenti funzionava; ora dall’iPhone non funziona correttamente.
 
-Non creare o mantenere HTML inline minimale e non duplicare l’intera dashboard nel file API.
+L’hardware e l’antenna Wi‑Fi devono rimanere collegati durante tutti i test. Non limitarti alla compilazione: esegui test reali con dispositivo acceso e connesso su COM6.
 
-Mantieni inoltre:
+## Comportamento da ripristinare
 
-- `captive::process()` nel `loop()`;
-- l’handler `server.onNotFound()` per le probe captive;
-- nessuna pagina intermedia;
-- compatibilità ESP8266/PROGMEM.
+```text
+iPhone
+→ Impostazioni Wi‑Fi
+→ connessione a PortaChiave-XXXX
+→ apertura automatica del popup captive
+→ dashboard PortaChiave completa
+→ stato ONLINE
+→ pulsanti e schermate della dashboard utilizzabili
+```
 
-Poi verifica con evidenza:
+Il problema attuale da investigare è che da iPhone il popup/dashboard non funziona correttamente: verificare in particolare stato `OFFLINE`, pulsanti non funzionanti, errori API o JSON non valido.
 
-1. diff Git reale;
-2. build PlatformIO riuscita;
-3. `GET /` restituisce la dashboard completa effettiva;
-4. richieste captive sconosciute arrivano alla stessa dashboard;
-5. stato finale: “tecnicamente predisposto, da validare su iPhone” finché non viene fatto un test fisico.
+## Baseline obbligatoria
+
+Usa come riferimento del comportamento precedente funzionante:
+
+```text
+C:\Users\matti\Desktop\test
+```
+
+Non modificare mai quella cartella. Confronta la baseline con il progetto attuale soltanto per trovare la regressione.
+
+Concentrati su:
+
+```text
+src/main.cpp
+src/pk_api.cpp
+src/pk_captive.cpp
+src/pk_dashboard.cpp
+src/auth.cpp
+include/auth.h
+```
+
+## Metodo obbligatorio
+
+Non dichiarare il problema risolto senza una prova reale. Non applicare modifiche casuali o molte correzioni insieme.
+
+1. Prima riproduci il problema.
+2. Leggi il monitor seriale a `115200`.
+3. Verifica che il boot confermi:
+   - SoftAP avviato;
+   - IP `192.168.4.1`;
+   - captive DNS avviato;
+   - nessun reset, crash o errore di memoria.
+4. Verifica da un client collegato al Wi‑Fi PortaChiave:
+   - `GET /`
+   - `GET /api/device`
+   - `GET /api/system`
+   - `GET /api/wifi/status`
+   - `GET /api/auth/status`
+   - `GET /api/values`
+5. Per ogni endpoint API, verifica che:
+   - HTTP status sia corretto;
+   - `Content-Type` sia coerente;
+   - il corpo sia JSON realmente parsabile;
+   - le stringhe siano quotate correttamente;
+   - non ci siano parentesi, virgole o caratteri finali errati.
+6. Confronta ogni differenza rilevante con la baseline `test`.
+7. Solo dopo aver individuato una causa precisa, applica la modifica minima necessaria.
+8. Esegui di nuovo:
+   - `pio run`;
+   - upload su COM6;
+   - monitor seriale;
+   - test HTTP/API;
+   - test reale con iPhone.
+
+## Test iPhone obbligatorio
+
+Con iPhone collegato al PortaChiave:
+
+1. Dimentica la rete precedente se necessario.
+2. Collegati a `PortaChiave-XXXX`.
+3. Verifica che il popup captive si apra.
+4. Verifica che compaia la dashboard completa, non una pagina minima.
+5. Verifica che lo stato non resti `OFFLINE`.
+6. Premi almeno:
+   - INFO DEVICE;
+   - AUTHENTICATION;
+   - FUNCTIONS;
+   - ritorno alla home.
+7. Verifica che non compaiano messaggi come:
+   - `JSON non valido`;
+   - timeout;
+   - endpoint mancante;
+   - errore di rete.
+8. Prova anche ad aprire manualmente:
+
+```text
+http://192.168.4.1
+```
+
+in Safari, per distinguere un problema del popup captive da un problema della dashboard/API.
+
+## Vincoli
+
+- Non modificare la cartella `C:\Users\matti\Desktop\test`.
+- Non toccare `mobile_app`.
+- Non eliminare funzioni esistenti senza dimostrare che causano il problema.
+- Non fare commit o push.
+- Non dichiarare “risolto” se l’iPhone non è stato testato realmente.
+- Se non puoi controllare fisicamente l’iPhone, completa i test automatici e fermati indicando con precisione quali passaggi manuali restano da fare.
+
+## Report finale richiesto
+
+Riporta:
+
+```text
+1. Problema riprodotto: sì/no.
+2. Causa precisa trovata.
+3. Differenza rispetto alla baseline test.
+4. File modificati e perché.
+5. Risultato pio run.
+6. Risultato upload COM6.
+7. Log seriale rilevante.
+8. Risultato di ogni endpoint HTTP/API.
+9. Risultato del test iPhone.
+10. Stato finale:
+   - RISOLTO E TESTATO SU IPHONE
+   oppure
+   - CORRETTO NEL CODICE, MA DA TESTARE SU IPHONE
+   oppure
+   - BLOCCATO, CON CAUSA ESPLICITA.
+```

@@ -33,21 +33,22 @@ void begin() {
     });
     server.on("/api/device", HTTP_GET, []() {
         String j = "{";
-        j += "\"id\":\"PortaChiave\",";
-        j += "\"name\":" + String(device::name()) + ",";
-        j += "\"firmware\":" + String(device::firmware()) + ",";
+        j += "\"id\":" + String("\"") + device::name() + String("\"") + ",";
+        j += "\"name\":" + String("\"") + device::name() + String("\"") + ",";
+        j += "\"firmware\":" + String("\"") + device::firmware() + String("\"") + ",";
         j += "\"chipId\":" + String(ESP.getChipId()) + ",";
         j += "\"freeHeap\":" + String(ESP.getFreeHeap()) + ",";
-        j += "\"mac\":" + String(WiFi.macAddress()) + "";
+        j += "\"mac\":" + String("\"") + WiFi.macAddress() + String("\"") + "";
         j += "}";
         server.send(200, "application/json", j);
     });
 
     server.on("/api/wifi/status", HTTP_GET, []() {
         String j = "{";
-        j += "\"mode\":" + String(WiFi.getMode() ? "STA" : "AP") + ",";
-        j += "\"ssid\":" + String(WiFi.SSID()) + ",";
-        j += "\"ip\":" + String(WiFi.localIP().toString()) + ",";
+        j += String("\"mode\":\"") + (WiFi.getMode() ? "STA" : "AP") + "\",";
+        String ssid = WiFi.SSID();
+        j += String("\"ssid\":\"") + (ssid.length() > 0 ? ssid : "null") + "\",";
+        j += String("\"ip\":\"") + WiFi.localIP().toString() + "\",";
         j += "\"channel\":" + String(WiFi.channel()) + ",";
         j += "\"status\":" + String(WiFi.status()) + "";
         j += "}";
@@ -70,8 +71,8 @@ void begin() {
         j += "\"device\":" + String(ESP.getChipId()) + ",";
         j += "\"uptimeSec\":" + String(millis() / 1000) + ",";
         j += "\"freeHeap\":" + String(ESP.getFreeHeap()) + ",";
-        j += "\"firmware\":" + String(ESP.getSdkVersion()) + ",";
-        j += "\"resetReason\":" + String(ESP.getResetReason()) + "";
+        j += "\"firmware\":" + String("\"") + String(ESP.getSdkVersion()) + String("\"") + ",";
+        j += "\"resetReason\":" + String("\"") + String(ESP.getResetReason()) + String("\"") + "";
         j += "}";
         server.send(200, "application/json", j);
     });
@@ -85,10 +86,11 @@ void begin() {
 
     server.on("/api/auth/status", HTTP_GET, []() {
         String j = "{";
-        j += "\"authenticated\":" + String(auth::isAuthenticated() ? "true" : "false") + ",";
-        j += "\"role\":" + String(access::roleName(auth::role())) + ",";
-        j += "\"clientId\":" + String(auth::clientId()) + ",";
-        j += "\"sessionSecondsLeft\":" + String(auth::sessionSecondsLeft()) + "";
+        j += String("\"authenticated\":") + String(auth::isAuthenticated() ? 1 : 0) + ",";
+        j += String("\"role\":\"") + String(access::roleName(auth::role())) + "\",";
+        String clientId = auth::clientId();
+        j += String("\"clientId\":\"") + (clientId.length() > 0 ? clientId : "null") + "\",";
+        j += String("\"sessionSecondsLeft\":") + String(auth::sessionSecondsLeft()) + "";
         j += "}";
         server.send(200, "application/json", j);
     });

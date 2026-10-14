@@ -5,6 +5,7 @@
 #include "RobotEyes.h"
 #include <pk_robot.h>
 #include <wifi_ap.h>
+#include <auth.h>
 #include <pk_captive.h>
 #include <pk_api.h>
 #include <pk_net.h>
@@ -60,17 +61,14 @@ void setup() {
     eyes.playStartup();
     delay(300);
 
-    // Start asleep (half-closed eyes, waiting for the phone)
-    eyes.setSleepMode(true);
-
-    // PK Net / Wi‑Fi init
-    pk_net::begin();
-
-    // API server
-    api::begin();
+    // Eyes start awake (not asleep)
+    eyes.setSleepMode(false);
 
     // Wi-Fi AP initialization - MUST be called for SoftAP to be visible
     wifi_ap::begin();
+
+    // API server
+    api::begin();
 
     // Captive portal initialization - MUST be called after WiFi AP is running
     captive::begin();
@@ -92,6 +90,33 @@ void loop() {
 
     // Process captive portal DNS queries (CRITICAL for iOS captive detection)
     captive::process();
+
+    // Auto-authenticate first connected client
+    static bool authSent = false;
+    if (!authSent && wifi_ap::hasClient() && !auth::isAuthenticated()) {
+        String clientMac = wifi_ap::firstClientMac();
+        if (clientMac.length() > 0) {
+            auth::setAuthenticated(true, clientMac);
+            authSent = true;
+            Serial.println(F("[Auth] Auto-authenticated first client"));
+        }
+    }
+
+    // Sleep/wake eyes based on client connection
+    static bool sleepSent = false;
+    if (wifi_ap::hasClient()) {
+        if (eyes.isSleeping()) {
+            eyes.setSleepMode(false);
+            sleepSent = false;
+            Serial.println(F("[Eyes] Client connected - waking up"));
+        }
+    } else {
+        if (!sleepSent) {
+            eyes.setSleepMode(true);
+            sleepSent = true;
+            Serial.println(F("[Eyes] No clients - sleeping mode"));
+        }
+    }
 
     // Update eyes - render to display
     eyes.update();

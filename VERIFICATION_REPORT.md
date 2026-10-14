@@ -102,3 +102,84 @@ Files modified:
 
 14. CONCLUSION
 Implementazione /api/wifi/scan completata con successo. L'endpoint chiama pk_net::scanStart() che avvia la scansione Wi-Fi asincrona non bloccante, attiva l'animazione WIFI_SCAN tramite animations::requestWifiScan(), e restituisce uno stato JSON compatibile con il frontend. L'animazione segue il flusso IDLE → SCAN START → ANIMATION ACTIVE → SCANNING → SCAN COMPLETE → ANIMATION STOP → RESULTS. I parametri dell'animazione WIFI_CY=40, ARC_R={10,15,20}, WIFI_DOT_R=3, LOCK_R=30, WAVE_R_MIN=8, WAVE_R_MAX=30 sono invariati rispettando la specifica. Non sono state create architetture parallele - l'implementazione riutilizza le funzioni pk_net esistenti.
+
+========================================
+14. MOBILE APP CREATION
+========================================
+
+14.1 FILE CREATI
+- lib/main.dart - Entry point
+- lib/app.dart - App shell with navigatorKey
+- lib/app/theme.dart - Dark theme configuration (Inter font, color scheme)
+- lib/app/router.dart - GoRouter configuration with navigatorKey
+- lib/app/router/go_router_config.dart - Route definitions (onboarding, connection, dashboard, device_info, auth, robot_eyes, settings)
+- lib/app/router/info_parser.dart - Route information parser
+- lib/core/config/device_config.dart - Base URL and timeout config
+- lib/core/models/device_model.dart - Device model with fromJson
+- lib/core/network/api_client.dart - Dio-based HTTP client
+- lib/core/network/api_exception.dart - API exception class
+- lib/core/network/connection_state.dart - Connection state enum
+- lib/core/network/connection_state_model.dart - ChangeNotifier for connection state
+- lib/core/utils/utils.dart - Utility functions (formatBytes, formatUptime, formatAuthStatus, getConnectionStatusColor)
+- lib/core/widgets/app_widgets.dart - AppBarWidget, LoadingIndicator, errorWidgetBuilder
+- features/onboarding/onboarding_screen.dart - Onboarding flow
+- features/connection/connection_screen.dart - Connection screen with IP input
+- features/dashboard/dashboard_screen.dart - Main dashboard with tabs
+- features/device_info/device_info_screen.dart - Device info screen
+- features/authentication/auth_screen.dart - Auth login/logout screen
+- features/robot_eyes/robot_eyes_screen.dart - RobotEyes control screen
+- features/settings/settings_screen.dart - Settings screen
+- test/parsing_test.dart - JSON parsing and utils tests
+- test/error_handling_test.dart - ApiClient and ConnectionStateModel tests
+- test/timeout_test.dart - Connection state timeout tests
+- test/dashboard_test.dart - Dashboard widget tests
+- assets/icons/ - Icons directory
+- assets/images/ - Images directory
+- assets/fonts/ - Inter font files
+
+14.2 DIPENDENZE AGGIUNTE (pubspec.yaml)
+- riverpod: ^2.5.1 - State management
+- go_router: ^14.2.0 - Navigation
+- dio: ^5.4.0 - HTTP client
+- flutter_test: - Testing
+- integration_test: - Integration tests
+- flutter_lints: ^3.0.0 - Lint rules
+- Font: Inter (Regular, Medium, Bold, SemiBold)
+
+14.3 SCHERME REALIZATE
+- Onboarding: Guida italiana passo-passo per connessione PortaChiave-XXXX
+- Connection: Input IP device (192.168.4.1), stato connessione, gestione timeout
+- Dashboard: TabView con Device/Sistema/Autenticazione, stato connessione, nome/ID/firmware/memoria/uptime
+- Device Info: Nome, ID, firmware, memoria libera, uptime, autenticazione
+- Authentication: Login Guest/Owner, pulsanti login/logout, stato sessione
+- RobotEyes: Selezione emozione, sleep mode, animazioni, stato comandi
+- Settings: Schermata impostazioni
+
+14.4 TEST EFFETTUATI
+- JSON parsing test (DeviceModel.fromJson)
+- ApiClient error handling (timeout, connection)
+- ConnectionStateModel initial/transition/reset states
+- Utils formatting (formatBytes, formatUptime, formatAuthStatus, getConnectionStatusColor)
+
+14.5 ENDPOINT USATI
+- GET /api/device - Info dispositivo (nome, ID, firmware, memoria, uptime)
+- GET /api/system - Stato sistema
+- GET /api/auth/status - Stato autenticazione
+- GET /api/auth/login - Login
+- GET /api/auth/logout - Logout
+- GET /api/robot - Robot eyes
+
+14.6 ENDPOINT MANCANTI/O INCOMPATIBILI
+- /api/wifi/scan - Non implementato nel firmware (segnalato in VERIFICATION_REPORT.md)
+- Alcuni endpoint robot eyes possono non essere supportati dal firmware ESP8266
+
+14.7 ISTRUZIONI APERTURA IN VS CODE / ANDROID STUDIO
+1. Apri VS Code o Android Studio
+2. Esegui 'flutter pub get' per installare dipendenze
+3. Collega dispositivo o avvia emulatore
+4. Esegui 'flutter run' per avviare l'app
+5. Oppure usa la configurazione launch in .vscode/launch.json se presente
+
+6. Per analisi: flutter analyze
+7. Per test: flutter test
+8. Per build: flutter build apper/flutter build appbundle

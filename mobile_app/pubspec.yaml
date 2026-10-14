@@ -1,0 +1,35 @@
+name: portachiave_mobile
+description: App mobile professionale per PortaChiave
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  go_router: ^14.2.0
+  dio: ^5.4.0
+  flutter_riverpod: ^2.5.1
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material3: true
+  assets:
+    - assets/fonts/
+    - assets/icons/
+    - images/
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+        - asset: assets/fonts/Inter-Bold.ttf
+        - asset: assets/fonts/Inter-SemiBold.ttf

@@ -1,0 +1,233 @@
+Crea una nuova applicazione mobile professionale per PortaChiave in questa cartella esatta:
+
+```text
+C:\Users\matti\Desktop\portachiave\mobile_app
+```
+
+Se la cartella `mobile_app` non esiste, creala. Tutti i file della nuova app devono restare esclusivamente al suo interno.
+
+Non modificare, spostare, eliminare o rinominare alcun file esterno a `mobile_app`, in particolare:
+
+```text
+C:\Users\matti\Desktop\portachiave\src
+C:\Users\matti\Desktop\portachiave\include
+C:\Users\matti\Desktop\portachiave\platformio.ini
+```
+
+Non fare commit, push, reset o altre operazioni Git.
+
+## Obiettivo
+
+Crea un’app Flutter professionale, nativa e unica per iOS e Android. L’app deve collegarsi localmente al dispositivo PortaChiave attraverso la sua rete Wi‑Fi:
+
+```text
+PortaChiave-XXXX
+```
+
+Il firmware ESP8266 è raggiungibile all’indirizzo:
+
+```text
+http://192.168.4.1
+```
+
+L’app deve funzionare in locale e non richiedere Internet, cloud, pubblicità, analytics o login remoto.
+
+## Tecnologia
+
+Usa Flutter e Dart.
+
+Usa:
+
+```text
+- Riverpod per stato applicazione;
+- GoRouter per navigazione;
+- http oppure Dio per API HTTP;
+- modelli tipizzati per risposte API;
+- test Flutter;
+- tema dark professionale.
+```
+
+## Struttura richiesta
+
+Crea esattamente questa struttura:
+
+```text
+C:\Users\matti\Desktop\portachiave\mobile_app\
+├── README.md
+├── pubspec.yaml
+├── analysis_options.yaml
+├── assets\
+│   ├── icons\
+│   └── images\
+├── lib\
+│   ├── main.dart
+│   ├── app\
+│   │   ├── app.dart
+│   │   ├── router.dart
+│   │   └── theme.dart
+│   ├── core\
+│   │   ├── config\
+│   │   │   └── device_config.dart
+│   │   ├── models\
+│   │   ├── network\
+│   │   │   ├── api_client.dart
+│   │   │   ├── api_exception.dart
+│   │   │   └── connection_state.dart
+│   │   ├── utils\
+│   │   └── widgets\
+│   └── features\
+│       ├── onboarding\
+│       ├── connection\
+│       ├── dashboard\
+│       ├── device_info\
+│       ├── authentication\
+│       ├── robot_eyes\
+│       └── settings\
+├── test\
+└── integration_test\
+```
+
+Ogni feature deve contenere, dove utile:
+
+```text
+data/
+domain/
+presentation/
+```
+
+## Flusso dell’app
+
+### Primo avvio
+
+Mostra una guida in italiano:
+
+```text
+1. Accendi PortaChiave.
+2. Apri le impostazioni Wi‑Fi del telefono.
+3. Collegati alla rete PortaChiave-XXXX.
+4. Torna nell’app.
+5. Premi “Connetti a PortaChiave”.
+```
+
+Spiega chiaramente che la rete del dispositivo può non avere accesso a Internet.
+
+### Connessione
+
+Usa come base URL iniziale:
+
+```text
+http://192.168.4.1
+```
+
+Verifica il dispositivo tramite:
+
+```text
+GET /api/device
+```
+
+Gestisci questi stati:
+
+```text
+- Non collegato alla rete PortaChiave;
+- Connessione in corso;
+- PortaChiave trovato;
+- Timeout;
+- Risposta API non valida;
+- Firmware non compatibile;
+- Errore di rete.
+```
+
+Non fingere mai che il dispositivo sia connesso: ogni stato deve derivare da una richiesta realmente riuscita.
+
+### Dashboard
+
+Dopo la connessione mostra una dashboard nativa Flutter con:
+
+```text
+- stato connessione;
+- nome dispositivo;
+- ID dispositivo;
+- firmware;
+- memoria libera;
+- uptime;
+- stato autenticazione;
+- pulsante aggiorna;
+- sezioni Device, RobotEyes e Impostazioni.
+```
+
+Per ora usa soltanto endpoint locali appropriati:
+
+```text
+/api/device
+/api/system
+/api/auth/status
+/api/auth/login
+/api/auth/logout
+/api/robot
+```
+
+Se il firmware restituisce JSON non valido o un endpoint non esiste, mostra un messaggio leggibile e non bloccare l’app.
+
+### Autenticazione
+
+Crea una schermata con:
+
+```text
+- stato Guest o Owner;
+- pulsante login;
+- pulsante logout;
+- stato della sessione;
+- messaggi di errore chiari.
+```
+
+Non salvare password o token in chiaro.
+
+### RobotEyes
+
+Crea una schermata dedicata con:
+
+```text
+- stato occhi;
+- emozione;
+- sleep mode;
+- animazioni.
+```
+
+I comandi devono essere disabilitati con una spiegazione se il firmware non supporta ancora il relativo endpoint.
+
+## Design e sicurezza
+
+```text
+- Tema scuro moderno e professionale;
+- interfaccia completamente in italiano;
+- pulsanti grandi e accessibili;
+- layout responsivo per telefoni piccoli e grandi;
+- nessuna WebView: dashboard nativa Flutter;
+- nessuna funzione di attacco Wi‑Fi, deauth, evil twin, sniffing o raccolta credenziali;
+- nessun invio di dati a server esterni;
+- configura l’accesso HTTP locale per iOS e Android nel modo più ristretto possibile.
+```
+
+## Verifica obbligatoria
+
+Al termine:
+
+```text
+1. Esegui flutter analyze.
+2. Esegui flutter test.
+3. Crea test per parsing JSON, errore JSON, timeout, stato offline e dashboard.
+4. Verifica la compilazione su almeno una piattaforma disponibile.
+5. Compila README.md con installazione, avvio, struttura, connessione e limiti.
+```
+
+Nel report finale indica:
+
+```text
+- file creati;
+- dipendenze aggiunte;
+- schermate realizzate;
+- test effettuati;
+- endpoint usati;
+- endpoint mancanti o incompatibili;
+- istruzioni per aprire C:\Users\matti\Desktop\portachiave\mobile_app in VS Code o Android Studio.
+```
