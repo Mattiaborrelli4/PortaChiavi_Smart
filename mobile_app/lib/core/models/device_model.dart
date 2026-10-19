@@ -8,7 +8,7 @@ class DeviceModel {
   final String name;
   final String firmware;
   final bool isConnected;
-  final double freeMemory;
+  final double freeHeap;
   final int uptime;
   final bool isAuthenticated;
   final ConnectionState connectionState;
@@ -18,7 +18,7 @@ class DeviceModel {
     required this.name,
     required this.firmware,
     required this.isConnected,
-    required this.freeMemory,
+    required this.freeHeap,
     required this.uptime,
     required this.isAuthenticated,
     required this.connectionState,
@@ -29,7 +29,7 @@ class DeviceModel {
         name: json['name'] ?? 'PortaChiave',
         firmware: json['firmware'] ?? '1.0.0',
         isConnected: json['isConnected'] ?? false,
-        freeMemory: (json['freeMemory'] ?? 0).toDouble(),
+        freeHeap: (json['freeHeap'] ?? 0).toDouble(),
         uptime: json['uptime'] ?? 0,
         isAuthenticated: json['isAuthenticated'] ?? false,
         connectionState: _parseConnectionState(json['connectionState'] ?? 'disconnected'),
@@ -64,7 +64,7 @@ class DeviceModel {
         'name': name,
         'firmware': firmware,
         'isConnected': isConnected,
-        'freeMemory': freeMemory,
+        'freeHeap': freeHeap,
         'uptime': uptime,
         'isAuthenticated': isAuthenticated,
         'connectionState': connectionState.toString().split('.').last,

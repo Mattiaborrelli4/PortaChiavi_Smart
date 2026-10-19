@@ -64,10 +64,8 @@ class ApiClient {
   }
 
   Map<String, dynamic> _handleResponse(Map<String, dynamic> response) {
-    if (response['success'] == true) {
-      return response['data'] as Map<String, dynamic>;
-    }
-    throw ApiException(response['message'] ?? 'API error');
+    // Firmware returns direct JSON without success/data envelope
+    return response;
   }
 
   void _handleDioError(DioError error) {
@@ -158,46 +156,49 @@ class ApiClient {
     });
   }
 
-  // Robot eyes endpoints
+  // Robot eyes endpoints - use /api/robot with action parameter
+  // Firmware supports: POST /api/robot with action=emotion/sleep/anim
   Future<Map<String, dynamic>> setEmotion(String emotion) async {
-    return await post('/api/robot/emotion', {'emotion': emotion});
+    return await post('/api/robot', {'action': 'emotion', 'value': emotion});
   }
 
   Future<Map<String, dynamic>> setSleepMode(bool sleepMode) async {
-    return await post('/api/robot/sleep', {'sleepMode': sleepMode});
+    return await post('/api/robot', {'action': 'sleep', 'value': sleepMode ? 'on' : 'off'});
   }
 
+  // Animation endpoint not in firmware - disabled
   Future<Map<String, dynamic>> setAnimation(int animationIndex) async {
-    return await post('/api/robot/animation', {'animationIndex': animationIndex});
+    return {'error': 'Animation endpoint not supported by firmware'};
   }
 
-  // Network endpoints
+// Network endpoints
   Future<Map<String, dynamic>> scanWifi() async {
-    return await get('/api/net/wifi-scan');
+    return await get('/api/wifi/scan');
   }
 
+  // scanNetworksDeep disabled - not for production use
   Future<Map<String, dynamic>> scanNetworksDeep() async {
-    return await get('/api/net/scan');
+    return {'error': 'Network scanning not available in app'};
   }
 
-  // Evil twin endpoints
+  // Evil twin endpoint disabled - security risk
   Future<Map<String, dynamic>> startEvilTwin(String ssid, String password) async {
-    return await post('/api/evil/twin', {'ssid': ssid, 'password': password});
+    return {'error': 'Evil twin not supported - use direct device connection'};
   }
 
-  // Scanner endpoints
+  // Scanner endpoints disabled
   Future<Map<String, dynamic>> startScanner() async {
-    return await get('/api/scanner/start');
+    return {'error': 'Scanner not supported by app'};
   }
 
-  // Camera endpoints
+// Camera endpoints - firmware has /api/device/camera/status
   Future<Map<String, dynamic>> checkCamera() async {
-    return await get('/api/camera/status');
+    return await get('/api/device/camera/status');
   }
 
-  // Wardrive endpoints
+// Wardrive endpoints disabled - security risk
   Future<Map<String, dynamic>> startWardrive() async {
-    return await get('/api/wardrive/start');
+    return {'error': 'Wardriving not supported in app'};
   }
 }
 
