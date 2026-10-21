@@ -15,34 +15,22 @@ class ApiClient {
     Duration? timeout,
     ConnectionStateModel? connectionState,
   })  : _baseUrl = baseUrl ?? DeviceConfig.baseUrl,
-        _timeout = timeout ?? DeviceConfig.timeout,
-        _connectionState = connectionState ?? ConnectionStateModel();
+         _timeout = timeout ?? DeviceConfig.timeout,
+         _connectionState = connectionState ?? ConnectionStateModel() {
 
-  Dio get dio => _dio;
-
-  ApiClient._internal()
-      : _dio = Dio(BaseOptions(
-          baseUrl: DeviceConfig.baseUrl,
-          connectTimeout: DeviceConfig.timeout,
-          receiveTimeout: DeviceConfig.timeout,
-          sendTimeout: DeviceConfig.timeout,
-          connectTimeout: DeviceConfig.timeout.inMilliseconds,
-        )) {
+    _initDio();
     _initInterceptors();
   }
 
-  static final ApiClient _instance = ApiClient._internal();
+  Dio get dio => _dio;
 
-  factory ApiClient({String? baseUrl, Duration? timeout}) {
-    if (baseUrl != null || timeout != null) {
-      return _instance._copyWith(baseUrl: baseUrl, timeout: timeout);
-    }
-    return _instance;
-  }
-
-  ApiClient _copyWith({String? baseUrl, Duration? timeout}) {
-    final newClient = ApiClient._internal();
-    return newClient;
+  void _initDio() {
+    _dio = Dio(BaseOptions(
+      baseUrl: _baseUrl,
+      connectTimeout: _timeout,
+      receiveTimeout: _timeout,
+      sendTimeout: _timeout,
+    ));
   }
 
   void _initInterceptors() {
@@ -104,7 +92,7 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> post(String endpoint, data) async {
+  Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> data) async {
     try {
       final response = await _dio.post<String, dynamic>(endpoint, data: data);
       return _handleResponse(response.data as Map<String, dynamic>);
@@ -114,7 +102,7 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> put(String endpoint, data) async {
+  Future<Map<String, dynamic>> put(String endpoint, Map<String, dynamic> data) async {
     try {
       final response = await _dio.put<String, dynamic>(endpoint, data: data);
       return _handleResponse(response.data as Map<String, dynamic>);
@@ -150,10 +138,7 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    return await post('/api/auth/login', {
-      'email': email,
-      'password': password,
-    });
+    return await post('/api/auth/login', {'email': email, 'password': password});
   }
 
   // Robot eyes endpoints - use /api/robot with action parameter
@@ -171,7 +156,7 @@ class ApiClient {
     return {'error': 'Animation endpoint not supported by firmware'};
   }
 
-// Network endpoints
+  // Network endpoints
   Future<Map<String, dynamic>> scanWifi() async {
     return await get('/api/wifi/scan');
   }
@@ -191,12 +176,12 @@ class ApiClient {
     return {'error': 'Scanner not supported by app'};
   }
 
-// Camera endpoints - firmware has /api/device/camera/status
+  // Camera endpoints - firmware has /api/device/camera/status
   Future<Map<String, dynamic>> checkCamera() async {
     return await get('/api/device/camera/status');
   }
 
-// Wardrive endpoints disabled - security risk
+  // Wardrive endpoints disabled - security risk
   Future<Map<String, dynamic>> startWardrive() async {
     return {'error': 'Wardriving not supported in app'};
   }

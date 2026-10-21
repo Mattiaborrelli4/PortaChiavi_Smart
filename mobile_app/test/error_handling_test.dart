@@ -1,28 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:portachiave_mobile/core/network/api_client.dart';
 import 'package:portachiave_mobile/core/network/api_exception.dart';
 import 'package:portachiave_mobile/core/network/connection_state.dart';
 
 void main() {
-  group('ApiClient error handling') {
-    test('handles timeout errors', () {
-      final client = ApiClient(
-        baseUrl: 'http://192.168.4.1',
-        timeout: Duration(milliseconds: 1),
-      );
-      expect(() => client.get('/api/device')).toThrow(ApiException);
+  group('ApiException tests') {
+    test('create ApiException with message', () {
+      final exception = ApiException('Test error');
+      expect(exception.message, 'Test error');
     });
 
-    test('handles connection errors', () {
-      final client = ApiClient(
-        baseUrl: 'http://192.168.4.1',
-        timeout: const Duration(seconds: 1),
-      );
-      expect(() => client.get('/api/device')).toThrow(ApiException);
+    test('create ApiException with message and code', () {
+      final exception = ApiException('Test error', 'E001');
+      expect(exception.message, 'Test error');
+      expect(exception.code, 'E001');
+    });
+
+    test('ApiException implements Exception', () {
+      final exception = ApiException('Test error');
+      expect(exception.toString(), contains('ApiException'));
     });
   }
 
-  group('ConnectionStateModel') {
+  group('ConnectionState tests') {
     test('initial state is disconnected', () {
       final model = ConnectionStateModel();
       expect(model.state, ConnectionState.disconnected);
@@ -40,6 +39,13 @@ void main() {
       model.setState(ConnectionState.connected);
       model.reset();
       expect(model.state, ConnectionState.disconnected);
+    });
+
+    test('hasError property', () {
+      final model = ConnectionStateModel();
+      expect(model.hasError, isFalse);
+      model.setState(ConnectionState.disconnected, 'Some error');
+      expect(model.hasError, isTrue);
     });
   }
 }

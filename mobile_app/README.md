@@ -1,6 +1,6 @@
 # App Mobile PortaChiave
 
-Applicazione Flutter multipiattaforma per iOS e Android per il controllo del dispositivo PortaChiave.
+Applicazione Flutter multipiattaforma per il controllo del dispositivo PortaChiave.
 
 ## Prerequisiti
 

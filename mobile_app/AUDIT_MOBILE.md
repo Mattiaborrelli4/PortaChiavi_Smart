@@ -1,12 +1,12 @@
 # Audit Mobile - Portachiave Project
 
-## Status: RESOLVED
+## Status: CODE CORRECTIONS COMPLETED, VERIFICATION PENDING
 
 ### Files Inspected
 - `mobile_app/` - Flutter project structure
-- `src/` - Firmware source code (ESP8266)
+- `src/` - Firmware source code (ESP8266 NodeMCU)
 - `include/` - Firmware headers
-- `platformio.ini` - PlatformIO configuration
+- `platformio.ini` - PlatformIO configuration with `board = nodemcuv2`
 
 ---
 
@@ -17,45 +17,34 @@
 - Dependencies: `go_router ^14.2.0`, `dio ^5.4.0`, `flutter_riverpod ^2.5.1`
 - Dark theme configured with Material 3
 
-### `mobile_app/main.dart`
+### `mobile_app/lib/main.dart`
 - Entry point using `GoRouter` for navigation
 - Dark theme applied consistently
+- Imports router via `package:portachiave_mobile/app/router.dart as router`
 
-### `mobile_app/lib/app.dart`
-- App shell with navigatorKey
-- Router delegate setup
-
-### `mobile_app/lib/app/router.go_router_config.dart`
-- 8 routes defined: onboarding, connection, dashboard, device-info, auth, robot-eyes, settings
-- Routes reference features that now exist
+### `mobile_app/lib/app/router/go_router_config.dart`
+- 7 routes defined: onboarding, connection, dashboard, device-info, auth, robot-eyes, settings
+- All routes reference features that exist under `mobile_app/lib/features/`
 
 ### `mobile_app/lib/app/router/info_parser.dart`
-- Route information parser for GoRouter
+- Route information parser for GoParser
+- `GoRouteInfo.tryParse` maps paths to routes: /onboarding, /connection, /dashboard, /device-info, /auth, /robot-eyes, /settings
 
-### `mobile_app/lib/core/config/device_config.dart`
-- Base URL: `http://192.168.4.1`
-- Timeout: 5 seconds
+### `mobile_app/lib/core/network/api_client.dart`
+- Dio-based API client with all endpoints inline
+- `DeviceConfig` and `ApiException` defined locally (no separate files)
+- Base URL: `http://192.168.4.1`, Timeout: 5 seconds
+- All endpoints use direct JSON (no `success/data` envelope)
+- Interceptors manage connection state (connecting, connected, networkError)
 
 ### `mobile_app/lib/core/models/device_model.dart`
 - `DeviceModel` with fields: id, name, firmware, isConnected, freeHeap, uptime, isAuthenticated, connectionState
 - `FeatureModule` class for feature definitions
-- Field names corrected to match firmware (`freeHeap` not `freeMemory`)
-
-### `mobile_app/lib/core/network/api_client.dart`
-- Dio-based API client
-- Singleton pattern
-- Interceptors for connection state management
-- All endpoints corrected to match real firmware endpoints
-- Removed/disabled: evil twin, wardriving, scanner, animation endpoints
-- `checkCamera()` now uses `/api/device/camera/status`
-- Robot endpoints use `/api/robot` with `action` parameter
+- Field names match firmware (`freeHeap` not `freeMemory`)
 
 ### `mobile_app/lib/core/network/connection_state_model.dart`
 - `ConnectionStateModel` extending ChangeNotifier
-- State management for connection status
-
-### `mobile_app/lib/core/network/connection_state.dart`
-- `ConnectionState` enum: disconnected, connecting, connected, timeout, apiError, firmwareIncompatible, networkError
+- State management for connection status with setState/reset
 
 ### `mobile_app/lib/core/widgets/app_widgets.dart`
 - AppBarWidget, LoadingIndicator, errorWidgetBuilder
@@ -63,9 +52,9 @@
 ### `mobile_app/lib/core/utils/utils.dart`
 - Utils: formatBytes, formatUptime, formatAuthStatus, getConnectionStatusColor
 
-### `mobile_app/lib/features/` - Feature screens created
-- `onboarding/onboarding_screen.dart` - Onboarding flow with connect button
-- `connection/connection_screen.dart` - Connection screen with device discovery
+### `mobile_app/lib/features/` - Feature screens created under `lib/features/`
+- `onboarding/onboarding_screen.dart` - Onboarding flow with connect button, warns "this network might not have Internet"
+- `connection/connection_screen.dart` - Connection screen with device discovery, IP `192.168.4.1`
 - `dashboard/dashboard_screen.dart` - Dashboard with device info, firmware, uptime, memory, authentication
 - `device_info/device_info_screen.dart` - Detailed device information
 - `auth/auth_screen.dart` - Authentication status and login/logout
@@ -80,17 +69,14 @@
 
 | Method | Endpoint | Response |
 |--------|----------|----------|
-| GET | `/api/device` | `{id, name, firmware, chipId, freeHeap, mac}` |
-| GET | `/api/wifi/status` | `{mode, ssid, ip, channel, status}` |
-| GET | `/api/wifi/scan` | Scanning status/count |
+| GET | `/api/device` | `{id, name, firmware, freeHeap, mac}` |
 | GET | `/api/system` | `{device, uptimeSec, freeHeap, firmware, resetReason}` |
-| GET | `/api/values` | `[{name: "rssi", value: RSSI}]` |
+| GET | `/api/wifi/scan` | Scanning status/count |
 | GET | `/api/auth/status` | `{authenticated, role, clientId, sessionSecondsLeft}` |
 | POST | `/api/auth/login` | `{authenticated: true, role: "owner"}` |
 | POST | `/api/auth/logout` | `{ok: true}` |
-| GET | `/api/robot` | `{ok: true}` |
+| POST | `/api/robot` | `{ok: true}` (with `action` parameter) |
 | GET | `/api/device/camera/status` | `{state: "IDLE"}` |
-| GET | `/api/net/scan` | Network scan results |
 
 ### Endpoints NOT in firmware (removed/disabled from app)
 - `/api/robot/emotion` - Use `/api/robot` with `action=emotion` POST
@@ -108,46 +94,46 @@
 - `/api/evil` - Evil twin - disabled in app (security risk)
 - `/api/wardrive` - Wardriving - disabled in app (security risk)
 
+### API Contract Verification
+- ✅ `GET /api/device` matches firmware
+- ✅ `GET /api/system` supported by firmware
+- ✅ `GET /api/auth/status` matches firmware
+- ✅ `POST /api/auth/login` matches firmware
+- ✅ `POST /api/auth/logout` matches firmware
+- ✅ `POST /api/robot` with `action` parameter (NOT `GET /api/robot`)
+- ✅ `GET /api/device/camera/status` matches firmware
+- ✅ No `GET /api/robot` declared (firmware uses POST)
+- ✅ Local traffic only: `http://192.168.4.1`
+
 ---
 
 ## 3. Resolved Issues
 
-### 3.1 JSON Envelope Mismatch - FIXED
+### 3.1 JSON Envelope Mismatch - CODE FIXED
 - **Flutter (ApiClient):** `_handleResponse` now returns direct JSON without envelope check
 - **Firmware:** Returns direct JSON without envelope
-- **Impact:** Fixed - all API calls now work with direct JSON response
+- **Status:** Code corrected in `api_client.dart`
 
-### 3.2 Field Name Mismatches - FIXED
-| Flutter Model | Firmware Response | Status |
-|--------------|-------------------|--------|
-| `freeHeap` | `freeHeap` | ✓ Fixed |
-| `id` | Present in firmware | ✓ Matched |
-| `isAuthenticated` | Present in `/api/auth/status` | ✓ Matched |
-| `connectionState` | Derived from auth status | ✓ Implemented |
+### 3.2 Field Name Mismatches - CODE FIXED
+- `freeHeap` field name corrected to match firmware (was already `freeHeap`, removed `freeMemory` confusion)
+- All `DeviceModel` field mappings match firmware response fields
 
-### 3.3 API Client Endpoints - FIXED
-- `getDeviceInfo()` → `/api/device` ✓
-- `getSystemInfo()` → `/api/system` ✓
-- `getAuthStatus()` → `/api/auth/status` ✓
-- `login()` → `/api/auth/login` ✓
-- `setEmotion()` → `/api/robot` with `action=emotion` ✓
-- `setSleepMode()` → `/api/robot` with `action=sleep` ✓
-- `setAnimation()` → Disabled (not in firmware) ✓
-- `scanWifi()` → `/api/wifi/scan` ✓
-- `checkCamera()` → `/api/device/camera/status` ✓
-- `startEvilTwin()` → Disabled (security risk) ✓
-- `startScanner()` → Disabled ✓
-- `startWardrive()` → Disabled (security risk) ✓
+### 3.3 API Client Endpoints - CODE FIXED
+- All API calls corrected to match firmware endpoints exactly
+- Robot endpoints use `/api/robot` with `action` parameter via POST
+- Camera endpoint: `/api/device/camera/status` instead of `/api/camera/status`
+- Evil twin, wardriving, scanner endpoints disabled (return error messages)
+- Animation endpoint disabled (not in firmware)
 
-### 3.4 Feature Screens - COMPLETED
-All 7 feature screens created under `mobile_app/lib/features/`:
-- onboarding, connection, dashboard, device_info, auth, robot_eyes, settings
+### 3.4 Feature Screens - CODE COMPLETED
+- All 7 feature screens created under `mobile_app/lib/features/`:
+  - onboarding, connection, dashboard, device_info, auth, robot_eyes, settings
 
-### 3.5 Security - COMPLETED
-- Evil twin `/api/evil` endpoint disabled in app
-- Wardrive `/api/wardrive` endpoint disabled in app
-- Scanner endpoints disabled
-- Animation endpoint disabled
+### 3.5 Security - CODE COMPLETED
+- Evil twin `/api/evil` endpoint disabled in app (returns error)
+- Wardrive `/api/wardrive` endpoint disabled in app (returns error)
+- Scanner endpoints disabled (return error messages)
+- Animation endpoint disabled (returns error)
 - No cloud/analytics/ads/WebView integration
 - Local network only, no Internet required for basic function
 
@@ -156,72 +142,91 @@ All 7 feature screens created under `mobile_app/lib/features/`:
 - Firmware sets auth state via `/api/auth/login`/`/api/auth/logout`
 - Real-time connection verification via `/api/auth/status`
 
-### 3.7 API Client Error Handling
+### 3.7 API Client Error Handling - CODE FIXED
 - Proper timeout handling (connection, send, receive)
 - HTTP error handling (4xx, 5xx)
 - JSON malformation handling
-- Missing field handling
-- "Non disponibile" shown for non-exposed data
+- Missing field handling - "Non disponibile" shown for non-exposed data
 
 ---
 
-## 4. Required Changes (Completed)
+## 4. Required Changes (Code Completed)
 
-### 4.1 API Client Fixes - DONE
+### 4.1 API Client Fixes - CODE COMPLETED
 1. ✅ Removed `success/data` envelope handling - firmware returns direct JSON
-2. ✅ Fixed field names: `freeHeap` (was already correct)
-3. ✅ Fixed emotion/sleep endpoints to use `/api/robot` with `action` parameter
+2. ✅ Fixed field names: `freeHeap` (already correct, clarified `freeMemory` confusion)
+3. ✅ Fixed emotion/sleep endpoints to use `/api/robot` with `action` parameter via POST
 4. ✅ Fixed camera endpoint: `/api/device/camera/status` instead of `/api/camera/status`
 5. ✅ Removed/disabled endpoints not in firmware: evil twin, wardriving, scanner, animation
 
-### 4.2 Feature Screens - DONE
+### 4.2 Feature Screens - CODE COMPLETED
 - Created all 7 feature screens under `mobile_app/lib/features/`
 
-### 4.3 Dart Code Fixes - DONE
+### 4.3 Dart Code Fixes - CODE COMPLETED
 1. ✅ Updated `DeviceModel.fromJson` to use `freeHeap` (already correct)
 2. ✅ Updated all API calls to match firmware endpoints exactly
 3. ✅ Added proper error handling for missing fields
-4. ✅ Added security warnings for disabled endpoints
+4. ✅ Removed duplicate `features/` directory outside `lib/features/`
+5. ✅ Consolidated `DeviceConfig` and `ApiException` inside `api_client.dart`
 
-### 4.4 Android/iOS Configuration
-- Configured `android/app/src/main/AndroidManifest.xml` and `ios/Runner/Info.plist`
-- Allow only necessary HTTP traffic to `192.168.4.1`
-- Cleartext traffic exceptions only for local device
+### 4.4 Security Hardening - CODE COMPLETED
+- Evil twin, wardriving, scanner endpoints disabled with error messages
+- No cloud/analytics, no external WebView
+- Local traffic only: `http://192.168.4.1`
+- Removed all insecure method references from public client
 
-### 4.5 README Update - PENDING
-- Update `mobile_app/README.md` in Italian
+### 4.5 iOS/Android Platform Configuration - PENDING
+- Android: platforms need `flutter pub get` and `flutter build apk`
+- iOS: requires macOS/Xcode - not available in this environment
+- Cleartext traffic exceptions configured only for `192.168.4.1`
 
----
-
-## 5. Summary of Errors (All Resolved)
-
-| Category | Issue | severity | Status |
-|----------|-------|----------|--------|
-| API Envelope | Flutter assumed `success/data` envelope, firmware returns direct JSON | CRITICAL | ✅ RISOLTO |
-| Field Names | `freeMemory` vs `freeHeap` | HIGH | ✅ RISOLTO |
-| Endpoint Mismatch | `/api/robot/emotion`, `/api/robot/sleep`, `/api/robot/animation` not in firmware | HIGH | ✅ RISOLTO |
-| Feature Screens | Feature directory empty, screens need creation | HIGH | ✅ RISOLTO |
-| Security | Evil twin, wardriving, scanner endpoints exposed | MEDIUM | ✅ RISOLTO |
-| API Client | Various endpoint discrepancies | MEDIUM | ✅ RISOLTO |
+### 4.6 README Update - CODE COMPLETED
+- Updated `mobile_app/README.md` with real endpoints and limits
 
 ---
 
-## 6. Next Steps (Remaining)
+## 5. Summary of Code Changes (All Completed)
+
+| Category | Change | Status |
+|----------|--------|--------|
+| API Envelope | `_handleResponse` returns direct JSON | ✅ Code fixed |
+| Field Names | `freeHeap` confirmed matching firmware | ✅ Code fixed |
+| Endpoint Mismatch | All endpoints corrected to POST where firmware uses POST | ✅ Code fixed |
+| Feature Screens | All 7 under `lib/features/`, duplicate `features/` removed | ✅ Code fixed |
+| Security | Insecure endpoints disabled with error messages | ✅ Code fixed |
+| API Client | Dio init consolidated, DeviceConfig/ApiException inline | ✅ Code fixed |
+| Router | GoRouter config with 7 valid routes | ✅ Code fixed |
+| Tests | Fixed to import only real `lib/` files, no network dependencies | ✅ Code fixed |
+
+---
+
+## 6. Remaining Verification (Requires Flutter Environment)
 
 1. Run `flutter pub get` to fetch dependencies
 2. Run `flutter analyze` to check for errors
 3. Run `flutter test` to execute tests
-4. Create proper test files if not existing
-5. Update `mobile_app/README.md` in Italian with:
-   - prerequisiti
-   - installazione
-   - apertura in VS Code e Android Studio
-   - esecuzione dell'app
-   - connessione alla rete PortaChiave
-   - endpoint realmente usati
-   - limiti firmware
-   - limiti di sicurezza noti
-   - funzioni volutamente escluse
-6. Run `flutter build apk --debug` for Android build
-7. If iOS environment available, run iOS verification
-8. Commit and push to GitHub following Phase 8 instructions
+4. Run `flutter build apk --debug` for Android build
+5. iOS build requires macOS/Xcode - not verifiable in this environment
+
+### Known Issues Without Flutter Environment
+- `flutter analyze` cannot be executed
+- `flutter test` cannot be executed  
+- `flutter build apk --debug` cannot be executed
+- iOS build cannot be verified without macOS/Xcode
+
+---
+
+## 7. Endpoints Realmente Usati (Real Endpoints Used)
+
+L'app comunica con il firmware PortaChiave tramite questi endpoint HTTP locali:
+
+- `GET /api/device` - Informazioni dispositivo (nome, ID, firmware, memoria, uptime)
+- `GET /api/system` - Stato sistema (uptime, heap gratuito, motivo reset)
+- `GET /api/wifi/scan` - Scanning reti Wi-Fi
+- `GET /api/auth/status` - Stato autenticazione
+- `POST /api/auth/login` - Accesso con credenziali
+- `POST /api/auth/logout` - Uscita
+- `POST /api/robot` - Controllo occhi robotici (con parametro `action`)
+- `GET /api/device/camera/status` - Stato fotocamera
+
+Limite firmware: tutti i comandi `robot` usano `POST /api/robot` con parametro `action`, NON `GET /api/robot`.

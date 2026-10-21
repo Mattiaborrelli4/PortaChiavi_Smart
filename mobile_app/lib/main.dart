@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:portachiave_mobile/app/router.dart';
+import 'package:portachiave_mobile/app/router.dart' as router;
 import 'package:portachiave_mobile/app/theme.dart';
 
 void main() => runApp(const PortaChiaveApp());
@@ -13,9 +13,9 @@ class PortaChiaveApp extends StatelessWidget {
     theme: themeData(),
     darkTheme: themeData(),
     themeMode: ThemeMode.dark,
-    routerDelegate: routerDelegate(),
-    routeInformationProvider: routeInformationProvider(),
-    routeInformationParser: routeInformationParser(),
-    routeInformationListener: routeInformationListener(),
+    routerDelegate: router.routerDelegate,
+    routeInformationProvider: router.routeInformationProvider,
+    routeInformationParser: router.routeInformationParser,
+    routeInformationListener: router.routeInformationListener,
   );
 }

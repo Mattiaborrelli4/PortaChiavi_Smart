@@ -23,7 +23,7 @@ class _RobotEyesScreenState extends State<RobotEyesScreen> {
 
   Future<void> _loadRobotState() async {
     try {
-      final response = await _apiClient.get('/api/robot');
+      final response = await _apiClient.post('/api/robot', {});
       setState(() {
         _robotState = response;
         _isLoading = false;
